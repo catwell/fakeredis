@@ -20,7 +20,7 @@ See [redis-lua](https://github.com/nrk/redis-lua) for more.
 
 ## Design
 
-fakeredis tries to keep its interface compatible with redis-lua but is not fully compatible, see supported.txt for supported commands.
+fakeredis tries to keep its interface compatible with redis-lua but is not fully complete, see supported.txt for supported commands.
 
 fakeredis does not support multiple DBs. You should probably not use them anyway. If you really need SELECT in tests it is easy to write a small wrapper that uses multiple instances of fakeredis.
 

@@ -139,7 +139,7 @@ local keys = function(self,pattern)
   -- Then convert '\' to '%', '*' to '.*' and '?' to '.'. Leave '[]' as is.
   -- Wrap in '^$' to enforce bounds.
   local lp = "^" .. table.concat(t):gsub("[%^%$%(%)%.%+]","%%%0")
-    :gsub("\\","%%"):gsub("%*","%.%*"):gsub("%?","%.") .. "$"
+    :gsub("\\","%%"):gsub("%*",".*"):gsub("%?",".") .. "$"
   local r = {}
   for k,_ in pairs(self) do
     if k:match(lp) then r[#r+1] = k end
