@@ -176,12 +176,21 @@ end
 
 -- strings
 
-local set
+local set, incrby
 
 local append = function(self,k,v)
   local x = xgetw(self,k,"string")
   x[1] = (x[1] or "") .. v
   return #x[1]
+end
+
+local decr = function(self,k)
+  return incrby(self,k,-1)
+end
+
+local decrby = function(self,k,n)
+  assert(type(n) == "number")
+  return incrby(self,k,-n)
 end
 
 local get = function(self,k)
@@ -204,8 +213,6 @@ local getset = function(self,k,v)
   set(self,k,v)
   return r
 end
-
-local incrby
 
 local incr = function(self,k)
   return incrby(self,k,1)
@@ -624,6 +631,8 @@ local methods = {
   renamenx = chkargs_wrap(renamenx,2), -- (k,k2) -> renamed? (i.e. !existed? k2)
   -- strings
   append = chkargs_wrap(append,2), -- (k,v) -> #new
+  decr = chkargs_wrap(decr,1), -- (k) -> new
+  decrby = decrby, -- (k,n) -> new
   get = chkargs_wrap(get,1), -- (k) -> [v|nil]
   getrange = getrange, -- (k,start,end) -> string
   getset = chkargs_wrap(getset,2), -- (k,v) -> [oldv|nil]
