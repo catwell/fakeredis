@@ -319,7 +319,7 @@ T:done()
 
 T:start("server")
 T:eq(R:echo("foo"),"foo")
-T:eq(R:ping(),"PONG")
+T:eq(R:ping(),true)
 T:done()
 
 --- remaining key commands

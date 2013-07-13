@@ -601,7 +601,7 @@ local echo = function(self,v)
 end
 
 local ping = function(self)
-  return "PONG"
+  return true
 end
 
 -- server
@@ -674,7 +674,7 @@ local methods = {
   sunionstore = sunionstore, -- (k0,k1,...) -> #set at k0
   -- connection
   echo = chkargs_wrap(echo,1), -- (v) -> v
-  ping = ping, -- () -> PONG
+  ping = ping, -- () -> true
   -- server
   flushall = flushdb, -- () -> true
   flushdb = flushdb, -- () -> true
