@@ -1,8 +1,18 @@
+local TEST_REDIS_LUA = false
+
 local fakeredis = require "fakeredis"
 local cwtest = require "cwtest"
 
-local R = fakeredis.new()
 local T = cwtest.new()
+
+local R
+if TEST_REDIS_LUA then
+  local redis = require "redis"
+  R = redis.connect("127.0.0.1", 6379)
+else
+  local fakeredis = require "fakeredis"
+  R = fakeredis.new()
+end
 
 T.rk_nil = function(self,k)
   local r
