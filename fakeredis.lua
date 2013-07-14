@@ -220,6 +220,53 @@ local bitcount = function(self,k,i1,i2)
   return r
 end
 
+local bitop = function(self,op,k,...)
+  assert(type(op) == "string")
+  op = op:lower()
+  assert(
+    (op == "and") or
+    (op == "or") or
+    (op == "xor") or
+    (op == "not"),
+    "ERR syntax error"
+  )
+  k = chkarg(k)
+  local arg = {...}
+  local good_arity = (op == "not") and (#arg == 1) or (#arg > 0)
+  assert(good_arity,"ERR wrong number of arguments for 'bitop' command")
+  local l,vals = 0,{}
+  local s
+  for i=1,#arg do
+    s = xgetr(self,arg[i],"string")[1] or ""
+    if #s > l then l = #s end
+    vals[i] = s
+  end
+  if l == 0 then
+    del(self, k)
+    return 0
+  end
+  local vector_mt = {__index=function() return 0 end}
+  for i=1,#vals do
+    vals[i] = setmetatable({vals[i]:byte(1,-1)},vector_mt)
+  end
+  local r = {}
+  if op == "not" then
+    assert(#vals[1] == l)
+    for i=1,l do
+      r[i] = bit.band(bit.bnot(vals[1][i]),0xff)
+    end
+  else
+    local _op = bit["b" .. op]
+    for i=1,l do
+      local t = {}
+      for j=1,#vals do t[j] = vals[j][i] end
+      r[i] = _op(unpack(t))
+    end
+  end
+  set(self,k,string.char(unpack(r)))
+  return l
+end
+
 local decr = function(self,k)
   return incrby(self,k,-1)
 end
@@ -668,6 +715,7 @@ local methods = {
   -- strings
   append = chkargs_wrap(append,2), -- (k,v) -> #new
   bitcount = bitcount, -- (k,[start,end]) -> n
+  bitop = bitop, -- ([and|or|xor|not],k,...)
   decr = chkargs_wrap(decr,1), -- (k) -> new
   decrby = decrby, -- (k,n) -> new
   get = chkargs_wrap(get,1), -- (k) -> [v|nil]

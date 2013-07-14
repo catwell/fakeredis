@@ -25,7 +25,7 @@
 
 [x] append
 [x] bitcount
-[ ] bitop
+[x] bitop
 [x] decr
 [x] decrby
 [x] get
