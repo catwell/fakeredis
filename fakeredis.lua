@@ -1,3 +1,9 @@
+--- Bit operations
+
+local ok,bit = pcall(require,"bit")
+if not ok then bit = bit32 end
+assert(type(bit) == "table", "module for bitops not found")
+
 --- Helpers
 
 local xdefv = function(ktype)
@@ -45,6 +51,20 @@ local toint = function(x)
   if (type(x) == "number") and (math.floor(x) == x) then
     return x
   else return nil end
+end
+
+local char_bitcount = function(x)
+  assert(
+    (type(x) == "number") and
+    (math.floor(x) == x) and
+    (x >= 0) and (x < 256)
+  )
+  local n = 0
+  while x ~= 0 do
+    x = bit.band(x,x-1)
+    n = n+1
+  end
+  return n
 end
 
 local chkarg = function(x)
@@ -176,12 +196,28 @@ end
 
 -- strings
 
-local set, incrby
+local getrange, incrby, set
 
 local append = function(self,k,v)
   local x = xgetw(self,k,"string")
   x[1] = (x[1] or "") .. v
   return #x[1]
+end
+
+local bitcount = function(self,k,i1,i2)
+  k = chkarg(k)
+  local s
+  if i1 or i2 then
+    assert(i1 and i2, "ERR syntax error")
+    s = getrange(self,k,i1,i2)
+  else
+    s = xgetr(self,k,"string")[1] or ""
+  end
+  local r,bytes = 0,{s:byte(1,-1)}
+  for i=1,#bytes do
+    r = r + char_bitcount(bytes[i])
+  end
+  return r
 end
 
 local decr = function(self,k)
@@ -198,7 +234,7 @@ local get = function(self,k)
   return x[1]
 end
 
-local getrange = function(self,k,i1,i2)
+getrange = function(self,k,i1,i2)
   k = chkarg(k)
   assert( (type(i1) == "number") and (type(i2) == "number") )
   local x = xgetr(self,k,"string")
@@ -631,6 +667,7 @@ local methods = {
   renamenx = chkargs_wrap(renamenx,2), -- (k,k2) -> renamed? (i.e. !existed? k2)
   -- strings
   append = chkargs_wrap(append,2), -- (k,v) -> #new
+  bitcount = bitcount, -- (k,[start,end]) -> n
   decr = chkargs_wrap(decr,1), -- (k) -> new
   decrby = decrby, -- (k,n) -> new
   get = chkargs_wrap(get,1), -- (k) -> [v|nil]

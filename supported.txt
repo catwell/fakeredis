@@ -24,7 +24,7 @@
 # strings
 
 [x] append
-[ ] bitcount
+[x] bitcount
 [ ] bitop
 [x] decr
 [x] decrby
