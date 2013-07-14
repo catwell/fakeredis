@@ -281,6 +281,21 @@ local get = function(self,k)
   return x[1]
 end
 
+local getbit = function(self,k,offset)
+  k = chkarg(k)
+  offset = toint(offset)
+  assert(
+    (offset >= 0),
+    "ERR bit offset is not an integer or out of range"
+  )
+  local bitpos = offset % 8 -- starts at 0
+  local bytepos = (offset - bitpos) / 8 -- starts at 0
+  local s = xgetr(self,k,"string")[1] or ""
+  if bytepos >= #s then return 0 end
+  local char = s:sub(bytepos+1,bytepos+1):byte()
+  return bit.band(bit.rshift(char,7-bitpos),1)
+end
+
 getrange = function(self,k,i1,i2)
   k = chkarg(k)
   assert( (type(i1) == "number") and (type(i2) == "number") )
@@ -336,6 +351,38 @@ end
 set = function(self,k,v)
   self[k] = {ktype="string",value={v}}
   return true
+end
+
+local setbit = function(self,k,offset,b)
+  k = chkarg(k)
+  offset,b = toint(offset),toint(b)
+  assert(
+    (offset >= 0),
+    "ERR bit offset is not an integer or out of range"
+  )
+  assert(
+    (b == 0) or (b == 1),
+    "ERR bit is not an integer or out of range"
+  )
+  local bitpos = offset % 8 -- starts at 0
+  local bytepos = (offset - bitpos) / 8 -- starts at 0
+  local s = xgetr(self,k,"string")[1] or ""
+  local pad = {s}
+  for i=2,bytepos+2-#s do pad[i] = "\0" end
+  s = table.concat(pad)
+  assert(#s >= bytepos+1)
+  local before = s:sub(1,bytepos)
+  local char = s:sub(bytepos+1,bytepos+1):byte()
+  local after = s:sub(bytepos+2,-1)
+  local old = bit.band(bit.rshift(char,7-bitpos),1)
+  if b == 1 then
+    char = bit.bor(bit.lshift(1,7-bitpos),char)
+  else
+    char = bit.band(bit.bnot(bit.lshift(1,7-bitpos)),char)
+  end
+  local r = before .. string.char(char) .. after
+  set(self,k,r)
+  return old
 end
 
 local setnx = function(self,k,v)
@@ -719,6 +766,7 @@ local methods = {
   decr = chkargs_wrap(decr,1), -- (k) -> new
   decrby = decrby, -- (k,n) -> new
   get = chkargs_wrap(get,1), -- (k) -> [v|nil]
+  getbit = getbit, -- (k,offset) -> b
   getrange = getrange, -- (k,start,end) -> string
   getset = chkargs_wrap(getset,2), -- (k,v) -> [oldv|nil]
   incr = chkargs_wrap(incr,1), -- (k) -> new
@@ -727,6 +775,7 @@ local methods = {
   mset = mset, -- (k1,v1,...) -> true
   msetnx = msetnx, -- (k1,v1,...) -> worked? (i.e. !existed? any k)
   set = chkargs_wrap(set,2), -- (k,v) -> true
+  setbit = setbit, -- (k,offset,b) -> old
   setnx = chkargs_wrap(setnx,2), -- (k,v) -> worked? (i.e. !existed?)
   setrange = setrange, -- (k,offset,val) -> #new
   strlen = chkargs_wrap(strlen,1), -- (k) -> [#v|0]

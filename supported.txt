@@ -29,7 +29,7 @@
 [x] decr
 [x] decrby
 [x] get
-[ ] getbit
+[x] getbit
 [x] getrange
 [x] getset
 [x] incr
@@ -40,7 +40,7 @@
 [x] msetnx
 [ ] psetex
 [x] set
-[ ] setbit
+[x] setbit
 [ ] setex
 [x] setnx
 [x] setrange
