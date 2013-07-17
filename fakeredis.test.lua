@@ -315,6 +315,16 @@ T:start("lists"); do
   T:eq( R:llen("foo"), 0 )
   T:eq( R:rpop("foo"), nil )
   T:rk_nil( "foo" )
+  T:eq( R:lpush("foo","A","B","C"), 3 )
+  T:eq( R:llen("foo"), 3 )
+  T:eq( R:lrange("foo",0,-1), {"C","B","A"} )
+  T:eq( R:del("foo"), 1 )
+  T:rk_nil( "foo" )
+  T:eq( R:rpush("foo","A","B","C"), 3 )
+  T:eq( R:llen("foo"), 3 )
+  T:eq( R:lrange("foo",0,-1), {"A","B","C"} )
+  T:eq( R:del("foo"), 1 )
+  T:rk_nil( "foo" )
 end; T:done()
 
 --- sets

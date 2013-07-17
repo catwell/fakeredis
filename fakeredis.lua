@@ -547,10 +547,13 @@ local lpop = function(self,k)
   return r
 end
 
-local lpush = function(self,k,v)
+local lpush = function(self,k,...)
+  local vs = getargs(...)
   local x = xgetw(self,k,"list")
-  x[x.head] = v
-  x.head = x.head - 1
+  for i=1,#vs do
+    x[x.head] = vs[i]
+    x.head = x.head - 1
+  end
   return _l_len(x)
 end
 
@@ -576,10 +579,13 @@ local rpop = function(self,k)
   return r
 end
 
-local rpush = function(self,k,v)
+local rpush = function(self,k,...)
+  local vs = getargs(...)
   local x = xgetw(self,k,"list")
-  x.tail = x.tail + 1
-  x[x.tail] = v
+  for i=1,#vs do
+    x.tail = x.tail + 1
+    x[x.tail] = vs[i]
+  end
   return _l_len(x)
 end
 
@@ -796,10 +802,10 @@ local methods = {
   lindex = lindex, -- (k,i) -> v
   llen = chkargs_wrap(llen,1), -- (k) -> #list
   lpop = chkargs_wrap(lpop,1), -- (k) -> v
-  lpush = chkargs_wrap(lpush,2), -- (k,v1) -> #list (after) -- TODO variadic
+  lpush = lpush, -- (k,v1,...) -> #list (after)
   lrange = lrange, -- (k,start,stop) -> list
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
-  rpush = chkargs_wrap(rpush,2), -- (k,v1) -> #list (after) -- TODO variadic
+  rpush = rpush, -- (k,v1,...) -> #list (after)
   -- sets
   sadd = sadd, -- (k,v1,...) -> #added
   scard = chkargs_wrap(scard,1), -- (k) -> [n|0]
