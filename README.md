@@ -6,9 +6,9 @@ fakeredis is a Redis mock for Lua with the same interface as [redis-lua](https:/
 
 ## Dependencies
 
-None with Lua 5.2 and LuaJIT.
+Some methods require LuaSocket.
 
-Lua 5.1 users will need [Lua BitOp](http://bitop.luajit.org/).
+Lua 5.1 users will also need [Lua BitOp](http://bitop.luajit.org/).
 
 Tests require [cwtest](https://github.com/catwell/cwtest).
 

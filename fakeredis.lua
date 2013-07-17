@@ -525,6 +525,58 @@ local _l_len = function(x)
   return x.tail - x.head
 end
 
+local blpop = function(self,...)
+  local arg = {...}
+  local timeout = toint(arg[#arg])
+  arg[#arg] = nil
+  local vs = getargs(...)
+  local x,l,k,v
+  for i=1,#vs do
+    k = vs[i]
+    x = xgetw(self,k,"list")
+    l = _l_len(x)
+    if l > 0 then
+      v = x[x.head+1]
+      if l > 1 then
+        x.head = x.head + 1
+        x[x.head] = nil
+      else self[k] = nil end
+      return {k,v}
+    else self[k] = nil end
+  end
+  if timeout > 0 then
+    (require "socket").sleep(timeout)
+  else
+    error("operation would block",0)
+  end
+end
+
+local brpop = function(self,...)
+  local arg = {...}
+  local timeout = toint(arg[#arg])
+  arg[#arg] = nil
+  local vs = getargs(...)
+  local x,l,k,v
+  for i=1,#vs do
+    k = vs[i]
+    x = xgetw(self,k,"list")
+    l = _l_len(x)
+    if l > 0 then
+      v = x[x.tail]
+      if l > 1 then
+        x[x.tail] = nil
+        x.tail = x.tail - 1
+      else self[k] = nil end
+      return {k,v}
+    else self[k] = nil end
+  end
+  if timeout > 0 then
+    (require "socket").sleep(timeout)
+  else
+    error("operation would block",0)
+  end
+end
+
 local lindex = function(self,k,i)
   k = chkarg(k)
   assert(type(i) == "number")
@@ -799,6 +851,8 @@ local methods = {
   hsetnx = chkargs_wrap(hsetnx,3), -- (k,sk1,v1) -> worked? (i.e. !existed?)
   hvals = chkargs_wrap(hvals,1), -- (k) -> values
   -- lists
+  blpop = blpop, -- (k1,...) -> k,v
+  brpop = brpop, -- (k1,...) -> k,v
   lindex = lindex, -- (k,i) -> v
   llen = chkargs_wrap(llen,1), -- (k) -> #list
   lpop = chkargs_wrap(lpop,1), -- (k) -> v

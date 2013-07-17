@@ -325,6 +325,36 @@ T:start("lists"); do
   T:eq( R:lrange("foo",0,-1), {"A","B","C"} )
   T:eq( R:del("foo"), 1 )
   T:rk_nil( "foo" )
+  T:eq( R:rpush("k1","A"), 1 )
+  T:eq( R:rpush("k2","A"), 1 )
+  T:eq( R:rpush("k2","B","C"), 3 )
+  T:eq( R:blpop("k1","k2","k3",0), {"k1","A"} )
+  T:eq( R:blpop("k1","k2","k3",1), {"k2","A"} )
+  T:eq( R:blpop("k1","k2","k3",0), {"k2","B"} )
+  T:eq( R:blpop("k1","k2","k3",1), {"k2","C"} )
+  T:rk_nil( "k1" ); T:rk_nil( "k2" ); T:rk_nil( "k3" )
+  T:eq( R:blpop("k1","k2","k3",1), nil )
+  if not TEST_REDIS_LUA then
+    T:err(
+      function() R:blpop("k1","k2","k3",0) end,
+      "operation would block"
+    )
+  end
+  T:eq( R:lpush("k1","A"), 1 )
+  T:eq( R:lpush("k2","A"), 1 )
+  T:eq( R:lpush("k2","B","C"), 3 )
+  T:eq( R:brpop("k1","k2","k3",0), {"k1","A"} )
+  T:eq( R:brpop("k1","k2","k3",1), {"k2","A"} )
+  T:eq( R:brpop("k1","k2","k3",0), {"k2","B"} )
+  T:eq( R:brpop("k1","k2","k3",1), {"k2","C"} )
+  T:rk_nil( "k1" ); T:rk_nil( "k2" ); T:rk_nil( "k3" )
+  T:eq( R:brpop("k1","k2","k3",1), nil )
+  if not TEST_REDIS_LUA then
+    T:err(
+      function() R:brpop("k1","k2","k3",0) end,
+      "operation would block"
+    )
+  end
 end; T:done()
 
 --- sets

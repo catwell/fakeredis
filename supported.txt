@@ -64,8 +64,8 @@
 
 # lists
 
-[ ] blpop
-[ ] brpop
+[x] blpop
+[x] brpop
 [ ] brpoplpus
 [x] lindex
 [ ] linsert
