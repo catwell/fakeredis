@@ -654,6 +654,59 @@ local lrange = function(self,k,i1,i2)
   return r
 end
 
+local _lrem_i = function(x,p)
+  for i=p,x.tail do
+    x[i] = x[i+1]
+  end
+  x.tail = x.tail - 1
+end
+
+local _lrem_l = function(x,v,s)
+  assert(v)
+  if not s then s = x.head+1 end
+  for i=s,x.tail do
+    if x[i] == v then
+      _lrem_i(x,i)
+      return i
+    end
+  end
+  return false
+end
+
+local _lrem_r = function(x,v,s)
+  assert(v)
+  if not s then s = x.tail end
+  for i=s,x.head+1,-1 do
+    if x[i] == v then
+      _lrem_i(x,i)
+      return i
+    end
+  end
+  return false
+end
+
+local lrem = function(self,k,count,v)
+  k,v = chkarg(k),chkarg(v)
+  assert(type(count) == "number")
+  if not self[k] then return 0 end
+  local x = xgetw(self,k,"list")
+  local n,last = 0,nil
+  local op = (count < 0) and _lrem_r or _lrem_l
+  local limited = (count ~= 0)
+  count = math.abs(count)
+  while true do
+    last = op(x,v,last)
+    if last then
+      n = n+1
+      if limited then
+        count = count - 1
+        if count == 0 then break end
+      end
+    else break end
+  end
+  return n
+end
+
 local lset = function(self,k,i,v)
   k,v = chkarg(k),chkarg(v)
   assert(type(i) == "number")
@@ -933,6 +986,7 @@ local methods = {
   lpush = lpush, -- (k,v1,...) -> #list (after)
   lpushx = chkargs_wrap(lpushx,2), -- (k,v) -> #list (after)
   lrange = lrange, -- (k,start,stop) -> list
+  lrem = lrem, -- (k,count,v) -> #removed
   lset = lset, -- (k,i,v) -> true
   ltrim = ltrim, -- (k,start,stop) -> true
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
