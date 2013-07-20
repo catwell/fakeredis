@@ -626,9 +626,7 @@ local lrange = function(self,k,i1,i2)
   local x,r = xgetr(self,k,"list"),{}
   i1 = math.max(_l_real_i(x,i1),x.head+1)
   i2 = math.min(_l_real_i(x,i2),x.tail)
-  if i1 <= i2 then
-    for i=i1,i2 do r[#r+1] = x[i] end
-  end
+  for i=i1,i2 do r[#r+1] = x[i] end
   return r
 end
 
@@ -644,6 +642,23 @@ local lset = function(self,k,i,v)
     error("ERR index out of range")
   end
   x[_l_real_i(x,i)] = v
+  return true
+end
+
+local ltrim = function(self,k,i1,i2)
+  k = chkarg(k)
+  assert( (type(i1) == "number") and (type(i2) == "number") )
+  local x = xgetw(self,k,"list")
+  i1,i2 = _l_real_i(x,i1),_l_real_i(x,i2)
+  for i=x.head+1,i1-1 do x[i] = nil end
+  for i=i2+1,x.tail do x[i] = nil end
+  x.head = math.max(i1-1,x.head)
+  x.tail = math.min(i2,x.tail)
+  assert(
+    (x[x.head] == nil) and
+    (x[x.tail+1] == nil)
+  )
+  if _l_len(x) == 0 then self[k] = nil end
   return true
 end
 
@@ -894,6 +909,7 @@ local methods = {
   lpushx = chkargs_wrap(lpushx,2), -- (k,v) -> #list (after)
   lrange = lrange, -- (k,start,stop) -> list
   lset = lset, -- (k,i,v) -> true
+  ltrim = ltrim, -- (k,start,stop) -> true
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
   rpush = rpush, -- (k,v1,...) -> #list (after)
   rpushx = chkargs_wrap(rpushx,2), -- (k,v) -> #list (after)

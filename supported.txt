@@ -76,7 +76,7 @@
 [x] lrange
 [ ] lrem
 [x] lset
-[ ] ltrim
+[x] ltrim
 [x] rpop
 [ ] rpoplpush
 [x] rpush
