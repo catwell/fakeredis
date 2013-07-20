@@ -587,6 +587,30 @@ local lindex = function(self,k,i)
   return x[_l_real_i(x,i)]
 end
 
+local linsert = function(self,k,mode,pivot,v)
+  mode = mode:lower()
+  assert((mode == "before") or (mode == "after"))
+  if not self[k] then return 0 end
+  local x = xgetw(self,k,"list")
+  local p = nil
+  for i=x.head+1,x.tail do
+    if x[i] == pivot then
+      p = i
+      break
+    end
+  end
+  if not p then return -1 end
+  if mode == "after" then
+    for i=x.head+1,p do x[i-1] = x[i] end
+    x.head = x.head - 1
+  else
+    for i=x.tail,p,-1 do x[i+1] = x[i] end
+    x.tail = x.tail + 1
+  end
+  x[p] = v
+  return _l_len(x)
+end
+
 local llen = function(self,k)
   local x = xgetr(self,k,"list")
   return _l_len(x)
@@ -903,6 +927,7 @@ local methods = {
   blpop = blpop, -- (k1,...) -> k,v
   brpop = brpop, -- (k1,...) -> k,v
   lindex = lindex, -- (k,i) -> v
+  linsert = chkargs_wrap(linsert,4), -- (k,mode,pivot,v) -> #list (after)
   llen = chkargs_wrap(llen,1), -- (k) -> #list
   lpop = chkargs_wrap(lpop,1), -- (k) -> v
   lpush = lpush, -- (k,v1,...) -> #list (after)

@@ -68,7 +68,7 @@
 [x] brpop
 [ ] brpoplpush
 [x] lindex
-[ ] linsert
+[x] linsert
 [x] llen
 [x] lpop
 [x] lpush
