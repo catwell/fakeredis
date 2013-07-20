@@ -72,7 +72,7 @@
 [x] llen
 [x] lpop
 [x] lpush
-[ ] lpushx
+[x] lpushx
 [x] lrange
 [ ] lrem
 [x] lset
@@ -80,7 +80,7 @@
 [x] rpop
 [ ] rpoplpush
 [x] rpush
-[ ] rpushx
+[x] rpushx
 
 # sets
 

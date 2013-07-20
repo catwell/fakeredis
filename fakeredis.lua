@@ -612,6 +612,14 @@ local lpush = function(self,k,...)
   return _l_len(x)
 end
 
+local lpushx = function(self,k,v)
+  if not self[k] then return 0 end
+  local x = xgetw(self,k,"list")
+  x[x.head] = v
+  x.head = x.head - 1
+  return _l_len(x)
+end
+
 local lrange = function(self,k,i1,i2)
   k = chkarg(k)
   assert( (type(i1) == "number") and (type(i2) == "number") )
@@ -656,6 +664,14 @@ local rpush = function(self,k,...)
     x.tail = x.tail + 1
     x[x.tail] = vs[i]
   end
+  return _l_len(x)
+end
+
+local rpushx = function(self,k,v)
+  if not self[k] then return 0 end
+  local x = xgetw(self,k,"list")
+  x.tail = x.tail + 1
+  x[x.tail] = v
   return _l_len(x)
 end
 
@@ -875,10 +891,12 @@ local methods = {
   llen = chkargs_wrap(llen,1), -- (k) -> #list
   lpop = chkargs_wrap(lpop,1), -- (k) -> v
   lpush = lpush, -- (k,v1,...) -> #list (after)
+  lpushx = chkargs_wrap(lpushx,2), -- (k,v) -> #list (after)
   lrange = lrange, -- (k,start,stop) -> list
   lset = lset, -- (k,i,v) -> true
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
   rpush = rpush, -- (k,v1,...) -> #list (after)
+  rpushx = chkargs_wrap(rpushx,2), -- (k,v) -> #list (after)
   -- sets
   sadd = sadd, -- (k,v1,...) -> #added
   scard = chkargs_wrap(scard,1), -- (k) -> [n|0]
