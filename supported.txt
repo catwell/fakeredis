@@ -66,20 +66,20 @@
 
 [x] blpop
 [x] brpop
-[ ] brpoplpus
+[ ] brpoplpush
 [x] lindex
 [ ] linsert
 [x] llen
 [x] lpop
-[~] lpush
+[x] lpush
 [ ] lpushx
 [x] lrange
 [ ] lrem
-[ ] lset
+[x] lset
 [ ] ltrim
 [x] rpop
 [ ] rpoplpush
-[~] rpush
+[x] rpush
 [ ] rpushx
 
 # sets

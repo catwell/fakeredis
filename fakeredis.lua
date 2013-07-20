@@ -25,7 +25,10 @@ end
 
 local xgetw = function(self,k,ktype)
   if self[k] and self[k].value then
-    assert(self[k].ktype == ktype)
+    assert(
+      (self[k].ktype == ktype),
+      "ERR Operation against a key holding the wrong kind of value"
+    )
   else
     self[k] = {ktype=ktype,value=xdefv(ktype)}
   end
@@ -621,6 +624,21 @@ local lrange = function(self,k,i1,i2)
   return r
 end
 
+local lset = function(self,k,i,v)
+  k,v = chkarg(k),chkarg(v)
+  assert(type(i) == "number")
+  if not self[k] then
+    error("ERR no such key")
+  end
+  local x = xgetw(self,k,"list")
+  local l = _l_len(x)
+  if i >= l or i < -l then
+    error("ERR index out of range")
+  end
+  x[_l_real_i(x,i)] = v
+  return true
+end
+
 local rpop = function(self,k)
   local x = xgetw(self,k,"list")
   local l,r = _l_len(x),x[x.tail]
@@ -858,6 +876,7 @@ local methods = {
   lpop = chkargs_wrap(lpop,1), -- (k) -> v
   lpush = lpush, -- (k,v1,...) -> #list (after)
   lrange = lrange, -- (k,start,stop) -> list
+  lset = lset, -- (k,i,v) -> true
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
   rpush = rpush, -- (k,v1,...) -> #list (after)
   -- sets
