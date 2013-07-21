@@ -425,6 +425,29 @@ T:start("lists"); do
       "operation would block"
     )
   end
+  T:eq( R:rpush("k1","A","B","C"), 3 )
+  T:eq( R:rpoplpush("k1","k1"), "C" )
+  T:eq( R:lrange("k1",0,-1), {"C","A","B"} )
+  T:eq( R:brpoplpush("k1","k1",0), "B" )
+  T:eq( R:lrange("k1",0,-1), {"B","C","A"} )
+  T:eq( R:rpoplpush("k2","k2"), nil )
+  T:rk_nil( "k2" )
+  T:eq( R:brpoplpush("k2","k1",1), nil )
+  T:rk_nil( "k2" )
+  T:eq( R:lrange("k1",0,-1), {"B","C","A"} )
+  if not TEST_REDIS_LUA then
+    T:err(
+      function() R:brpoplpush("k2","k1",0) end,
+      "operation would block"
+    )
+  end
+  T:eq( R:rpoplpush("k1","k2"), "A" )
+  T:eq( R:brpoplpush("k1","k3",0), "C" )
+  T:eq( R:brpoplpush("k1","k2",1), "B" )
+  T:eq( R:rpoplpush("k3","k2"), "C" )
+  T:eq( R:lrange("k2",0,-1), {"C","B","A"} )
+  T:eq( R:del("k2"), 1 )
+  T:rk_nil( "k1" ); T:rk_nil( "k2" ); T:rk_nil( "k3" )
 end; T:done()
 
 --- sets

@@ -528,6 +528,16 @@ local _l_len = function(x)
   return x.tail - x.head
 end
 
+local _block_for = function(timeout)
+  if timeout > 0 then
+    (require "socket").sleep(timeout)
+  else
+    error("operation would block",0)
+  end
+end
+
+local rpoplpush
+
 local blpop = function(self,...)
   local arg = {...}
   local timeout = toint(arg[#arg])
@@ -547,11 +557,7 @@ local blpop = function(self,...)
       return {k,v}
     else self[k] = nil end
   end
-  if timeout > 0 then
-    (require "socket").sleep(timeout)
-  else
-    error("operation would block",0)
-  end
+  _block_for(timeout)
 end
 
 local brpop = function(self,...)
@@ -573,11 +579,14 @@ local brpop = function(self,...)
       return {k,v}
     else self[k] = nil end
   end
-  if timeout > 0 then
-    (require "socket").sleep(timeout)
-  else
-    error("operation would block",0)
-  end
+  _block_for(timeout)
+end
+
+local brpoplpush = function(self,k1,k2,timeout)
+  k1,k2 = chkargs(2,k1,k2)
+  timeout = toint(timeout)
+  if not self[k1] then _block_for(timeout) end
+  return rpoplpush(self,k1,k2)
 end
 
 local lindex = function(self,k,i)
@@ -747,6 +756,13 @@ local rpop = function(self,k)
     x.tail = x.tail - 1
   else self[k] = nil end
   return r
+end
+
+rpoplpush = function(self,k1,k2)
+  local v = rpop(self,k1)
+  if not v then return nil end
+  lpush(self,k2,v)
+  return v
 end
 
 local rpush = function(self,k,...)
@@ -979,6 +995,7 @@ local methods = {
   -- lists
   blpop = blpop, -- (k1,...) -> k,v
   brpop = brpop, -- (k1,...) -> k,v
+  brpoplpush = brpoplpush, -- (k1,k2,timeout) -> v
   lindex = lindex, -- (k,i) -> v
   linsert = chkargs_wrap(linsert,4), -- (k,mode,pivot,v) -> #list (after)
   llen = chkargs_wrap(llen,1), -- (k) -> #list
@@ -990,6 +1007,7 @@ local methods = {
   lset = lset, -- (k,i,v) -> true
   ltrim = ltrim, -- (k,start,stop) -> true
   rpop = chkargs_wrap(rpop,1), -- (k) -> v
+  rpoplpush = chkargs_wrap(rpoplpush,2), -- (k1,k2) -> v
   rpush = rpush, -- (k,v1,...) -> #list (after)
   rpushx = chkargs_wrap(rpushx,2), -- (k,v) -> #list (after)
   -- sets
