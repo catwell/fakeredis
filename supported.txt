@@ -101,12 +101,12 @@
 
 # sorted sets
 
-[ ] zadd
-[ ] zcard
+[x] zadd
+[x] zcard
 [ ] zcount
 [ ] zincrby
 [ ] zinterstore
-[ ] zrange
+[x] zrange
 [ ] zrangebyscore
 [ ] zrank
 [ ] zrem

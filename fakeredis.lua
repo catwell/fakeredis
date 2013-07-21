@@ -9,6 +9,11 @@ assert(type(bit) == "table", "module for bitops not found")
 local xdefv = function(ktype)
   if ktype == "list" then
     return {head=0,tail=0}
+  elseif ktype == "zset" then
+    return {
+      list = {},
+      set = {},
+    }
   else return {} end
 end
 
@@ -46,6 +51,14 @@ local empty = function(self,k)
     return true
   elseif t == "list" then
     return v.head == v.tail
+  elseif t == "zset" then
+    if #v.list == 0 then
+      for _,_ in pairs(v.set) do error("incoherent") end
+      return true
+    else
+      for _,_ in pairs(v.set) do return(false) end
+      error("incoherent")
+    end
   else print(self.ktype); error("unsupported") end
 end
 
@@ -97,7 +110,7 @@ end
 local getargs_as_map = function(...)
   local arg,r = getargs(...),{}
   assert(#arg%2 == 0)
-  for i=0,#arg/2-1 do r[arg[2*i+1]] = arg[2*i+2] end
+  for i=1,#arg,2 do r[arg[i]] = arg[i+1] end
   return r
 end
 
@@ -952,6 +965,123 @@ local sunionstore = function(self,k2,k,...)
   return nkeys(x)
 end
 
+-- zsets
+
+local _z_p_mt = {
+  __eq = function(a,b)
+    if a.v == b.v then
+      assert(a.s == b.s)
+      return true
+    else return false end
+  end,
+  __lt = function(a,b)
+    if a.s == b.s then
+      return (a.v < b.v)
+    else
+      return (a.s < b.s)
+    end
+  end,
+}
+
+local _z_pair = function(s,v)
+  assert(
+    (type(s) == "number") and
+    (type(v) == "string")
+  )
+  local r = {s=s,v=v}
+  return setmetatable(r,_z_p_mt)
+end
+
+local _z_pairs = function(...)
+  local arg = {...}
+  assert((#arg > 0) and (#arg % 2 == 0))
+  local ps = {}
+  for i=1,#arg,2 do
+    ps[#ps+1] = _z_pair(
+      assert(tonumber(arg[i])),
+      chkarg(arg[i+1])
+    )
+  end
+  return ps
+end
+
+local _z_insert = function(x,ix,p)
+  assert(
+    (type(x) == "table") and
+    (type(ix) == "number") and
+    (type(p) == "table")
+  )
+  local l = x.list
+  table.insert(l,ix,p)
+  for i=ix+1,#l do
+    x.set[l[i].v] = x.set[l[i].v] + 1
+  end
+  x.set[p.v] = ix
+end
+
+local _z_remove = function(x,v)
+  local ix = assert(x.set[v])
+  assert(x.list[ix].v == v)
+  table.remove(x.list,ix)
+end
+
+local _z_update = function(x,p)
+  local l = x.list
+  local found = (not not x.set[p.v])
+  if found then _z_remove(x,p.v) end
+  local ix = nil
+  for i=1,#l do
+    if l[i] > p then
+      ix = i; break
+    end
+  end
+  if not ix then ix = #l+1 end
+  _z_insert(x,ix,p)
+  return found
+end
+
+local zadd = function(self,k,...)
+  k = chkarg(k)
+  local ps = _z_pairs(...)
+  local x = xgetw(self,k,"zset")
+  local n = 0
+  for i=1,#ps do
+    if not _z_update(x,ps[i]) then n = n+1 end
+  end
+  return n
+end
+
+local zcard = function(self,k)
+  local x = xgetr(self,k,"zset")
+  return #x.list
+end
+
+local zrange = function(self,k,i1,i2,opts)
+  k = chkarg(k)
+  local withscores = false
+  if type(opts) == "table" then
+    withscores = opts.withscores
+  elseif type(opts) == "string" then
+    assert(opts:lower() == "withscores")
+    withscores = true
+  else assert(opts == nil) end
+  local x = xgetr(self,k,"zset")
+  local l = x.list
+  i1,i2 = assert(toint(i1)),assert(toint(i2))
+  if i1 < 0 then i1 = #l+i1 end
+  if i2 < 0 then i2 = #l+i2 end
+  i1,i2 = math.max(i1+1,1),i2+1
+  if (i2 < i1) or (i1 > #l) then return {} end
+  i2 = math.min(i2,#l)
+  local r = {}
+  if withscores then
+    for i=i1,i2 do r[#r+1] = {l[i].v,tostring(l[i].s)} end
+  else
+    for i=i1,i2 do r[#r+1] = l[i].v end
+  end
+  return r
+end
+
 -- connection
 
 local echo = function(self,v)
@@ -1046,6 +1176,10 @@ local methods = {
   srem = srem, -- (k,v1,...) -> #removed
   sunion = sunion, -- (k1,...) -> set
   sunionstore = sunionstore, -- (k0,k1,...) -> #set at k0
+  -- zsets
+  zadd = zadd, -- (k,score,member,[score,member,...])
+  zcard = chkargs_wrap(zcard,1), -- (v) -> n
+  zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   -- connection
   echo = chkargs_wrap(echo,1), -- (v) -> v
   ping = ping, -- () -> true

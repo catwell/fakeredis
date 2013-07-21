@@ -542,6 +542,32 @@ T:start("sets"); do
   T:eq( R:del("S0","S1","S2","S3"), 4 )
 end; T:done()
 
+--- zsets
+
+T:start("zsets"); do
+  T:rk_nil("foo")
+  T:eq( R:zadd("foo",10,"A"), 1 )
+  T:eq( R:zadd("foo",20,"B","30","C"), 2 )
+  T:eq( R:zcard("foo"), 3 )
+  T:eq( R:zrange("foo",0,-1), {"A","B","C"} )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {{"A","10"},{"B","20"},{"C","30"}}
+  )
+  T:eq( R:zadd("foo",30,"A",30.5,"D"), 1 )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {{"B","20"},{"A","30"},{"C","30"},{"D","30.5"}}
+  )
+  T:eq(
+    R:zrange("foo",1,2,{withscores=true}),
+    {{"A","30"},{"C","30"}}
+  )
+  T:eq( R:zcard("foo"), 4 )
+  T:eq( R:del("foo"), 1 )
+  T:rk_nil("foo")
+end; T:done()
+
 --- server
 
 T:start("server"); do
