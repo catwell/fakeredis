@@ -458,6 +458,8 @@ T:start("sets"); do
   T:eq( R:sismember("foo","A"), false )
   T:seq( R:smembers("foo"), {} )
   T:eq( R:srandmember("foo"), nil )
+  T:eq( R:srandmember("foo",1), {} )
+  T:eq( R:srandmember("foo",-1), {} )
   T:eq( R:spop("foo"), nil )
   T:eq( R:sadd("foo","A"), 1 )
   T:eq( R:exists("foo"), true )
@@ -509,11 +511,35 @@ T:start("sets"); do
     _cur[_x] = false
     T:eq( R:scard("S0"), 6-i )
   end
+  T:rk_nil( "S0" )
+  T:eq( R:sunionstore("S0","S1","S2","S3"), 6 )
+  T:seq( R:smembers("S0"), {"A","B","C","D","E","F"} )
+  _cur = {A = true,B = true,C = true,D = true,E = true,F = true}
+  T:eq( R:srandmember("S0",0), {} )
+  T:seq( R:srandmember("S0",6), {"A","B","C","D","E","F"} )
+  T:seq( R:srandmember("S0",8), {"A","B","C","D","E","F"} )
+  _x = R:srandmember("S0",-3)
+  T:eq( #_x, 3 )
+  for i=1,#_x do T:eq( _cur[_x[i]], true ) end
+  _x = R:srandmember("S0",-8)
+  T:eq( #_x, 8 )
+  for i=1,#_x do T:eq( _cur[_x[i]], true ) end
+  local n
+  for t=1,10 do
+    _cur = {A = true,B = true,C = true,D = true,E = true,F = true}
+    n = math.random(1,5)
+    _x = R:srandmember("S0",n)
+    T:eq( #_x, n )
+    for i=1,n do
+      T:eq( _cur[_x[i]], true )
+      _cur[_x[i]] = false
+    end
+  end
   T:eq( R:smove("S2","S3","F"), true )
   T:eq( R:smove("S2","S3","F"), false )
   T:seq( R:smembers("S2"), {"A","B"} )
   T:seq( R:smembers("S3"), {"A","C","D","F"} )
-  T:eq( R:del("S0","S1","S2","S3"), 3 )
+  T:eq( R:del("S0","S1","S2","S3"), 4 )
 end; T:done()
 
 --- server

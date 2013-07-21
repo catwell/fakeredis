@@ -886,13 +886,30 @@ local spop = function(self,k)
   return r
 end
 
-local srandmember = function(self,k)
+local srandmember = function(self,k,count)
+  k = chkarg(k)
   local x = xgetr(self,k,"set")
   local l = lset_to_list(x)
   local n = #l
-  if n > 0 then
-    return l[math.random(1,n)]
-  else return nil end
+  if not count then
+    if n > 0 then
+      return l[math.random(1,n)]
+    else return nil end
+  end
+  count = toint(count)
+  if (count == 0) or (n == 0) then return {} end
+  if count >= n then return l end
+  local r = {}
+  if count > 0 then -- distinct elements
+    for i=0,count-1 do
+      r[#r+1] = table.remove(l,math.random(1,n-i))
+    end
+  else -- allow repetition
+    for i=1,-count do
+      r[#r+1] = l[math.random(1,n)]
+    end
+  end
+  return r
 end
 
 local srem = function(self,k,...)
@@ -1021,7 +1038,7 @@ local methods = {
   smembers = chkargs_wrap(smembers,1), -- (k) -> set
   smove = chkargs_wrap(smove,3), -- (k1,k2,v) -> moved? (i.e. !member? k1)
   spop = chkargs_wrap(spop,1), -- (k) -> [v|nil]
-  srandmember = chkargs_wrap(srandmember,1), -- (k) -> v -- TODO support count
+  srandmember = srandmember, -- (k,[count]) -> v|[v1,v2,...]
   srem = srem, -- (k,v1,...) -> #removed
   sunion = sunion, -- (k1,...) -> set
   sunionstore = sunionstore, -- (k0,k1,...) -> #set at k0

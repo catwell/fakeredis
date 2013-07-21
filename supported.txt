@@ -94,7 +94,7 @@
 [x] smembers
 [x] smove
 [x] spop
-[~] srandmember
+[x] srandmember
 [x] srem
 [x] sunion
 [x] sunionstore
