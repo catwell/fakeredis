@@ -49,6 +49,10 @@ local empty = function(self,k)
   else print(self.ktype); error("unsupported") end
 end
 
+local cleanup = function(self,k)
+  if empty(self,k) then self[k] = nil end
+end
+
 local toint = function(x)
   if type(x) == "string" then x = tonumber(x) end
   if (type(x) == "number") and (math.floor(x) == x) then
@@ -429,7 +433,7 @@ local hdel = function(self,k,...)
     if x[arg[i]] then r = r + 1 end
     x[arg[i]] = nil
   end
-  if empty(self,k) then self[k] = nil end
+  cleanup(self,k)
   return r
 end
 
@@ -744,7 +748,7 @@ local ltrim = function(self,k,i1,i2)
     (x[x.head] == nil) and
     (x[x.tail+1] == nil)
   )
-  if _l_len(x) == 0 then self[k] = nil end
+  cleanup(self,k)
   return true
 end
 
@@ -882,7 +886,7 @@ local spop = function(self,k)
     r = l[math.random(1,n)]
     x[r] = nil
   end
-  if empty(self,k) then self[k] = nil end
+  cleanup(self,k)
   return r
 end
 
@@ -922,7 +926,7 @@ local srem = function(self,k,...)
       r = r + 1
     end
   end
-  if empty(self,k) then self[k] = nil end
+  cleanup(self,k)
   return r
 end
 
