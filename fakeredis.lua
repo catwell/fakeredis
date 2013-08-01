@@ -1082,6 +1082,14 @@ local zrange = function(self,k,i1,i2,opts)
   return r
 end
 
+local zscore = function(self,k,v)
+  local x = xgetr(self,k,"zset")
+  local p = x.list[x.set[v]]
+  if p then
+    return p.s
+  else return nil end
+end
+
 -- connection
 
 local echo = function(self,v)
@@ -1180,6 +1188,7 @@ local methods = {
   zadd = zadd, -- (k,score,member,[score,member,...])
   zcard = chkargs_wrap(zcard,1), -- (v) -> n
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
+  zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
   -- connection
   echo = chkargs_wrap(echo,1), -- (v) -> v
   ping = ping, -- () -> true

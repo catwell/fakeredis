@@ -564,6 +564,10 @@ T:start("zsets"); do
     {{"A",30},{"C",30}}
   )
   T:eq( R:zcard("foo"), 4 )
+  T:eq( R:zscore("foo","D"), 30.5 )
+  T:eq( R:zscore("foo","nothing"), nil )
+  T:eq( R:zscore("nothing","D"), nil )
+  T:rk_nil("nothing")
   T:eq( R:del("foo"), 1 )
   T:rk_nil("foo")
 end; T:done()

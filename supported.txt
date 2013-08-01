@@ -115,7 +115,7 @@
 [ ] zrevrange
 [ ] zrevrangebyscore
 [ ] zrevrank
-[ ] zscore
+[x] zscore
 [ ] zunionstore
 
 # pub/sub
