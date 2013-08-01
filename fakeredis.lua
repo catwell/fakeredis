@@ -1075,7 +1075,7 @@ local zrange = function(self,k,i1,i2,opts)
   i2 = math.min(i2,#l)
   local r = {}
   if withscores then
-    for i=i1,i2 do r[#r+1] = {l[i].v,tostring(l[i].s)} end
+    for i=i1,i2 do r[#r+1] = {l[i].v,l[i].s} end
   else
     for i=i1,i2 do r[#r+1] = l[i].v end
   end

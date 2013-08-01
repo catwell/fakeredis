@@ -552,16 +552,16 @@ T:start("zsets"); do
   T:eq( R:zrange("foo",0,-1), {"A","B","C"} )
   T:eq(
     R:zrange("foo",0,-1,{withscores=true}),
-    {{"A","10"},{"B","20"},{"C","30"}}
+    {{"A",10},{"B",20},{"C",30}}
   )
   T:eq( R:zadd("foo",30,"A",30.5,"D"), 1 )
   T:eq(
     R:zrange("foo",0,-1,{withscores=true}),
-    {{"B","20"},{"A","30"},{"C","30"},{"D","30.5"}}
+    {{"B",20},{"A",30},{"C",30},{"D",30.5}}
   )
   T:eq(
     R:zrange("foo",1,2,{withscores=true}),
-    {{"A","30"},{"C","30"}}
+    {{"A",30},{"C",30}}
   )
   T:eq( R:zcard("foo"), 4 )
   T:eq( R:del("foo"), 1 )
