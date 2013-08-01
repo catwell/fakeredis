@@ -1021,8 +1021,13 @@ end
 
 local _z_remove = function(x,v)
   local ix = assert(x.set[v])
-  assert(x.list[ix].v == v)
-  table.remove(x.list,ix)
+  local l = x.list
+  assert(l[ix].v == v)
+  table.remove(l,ix)
+  for i=ix,#l do
+    x.set[l[i].v] = x.set[l[i].v] - 1
+  end
+  x.set[v] = nil
 end
 
 local _z_update = function(x,p)
@@ -1038,6 +1043,29 @@ local _z_update = function(x,p)
   if not ix then ix = #l+1 end
   _z_insert(x,ix,p)
   return found
+end
+
+local _z_coherence = function(x)
+  local l,s = x.list,x.set
+  local found,n = {},0
+  for val,pos in pairs(s) do
+    if found[pos] then return false end
+    found[pos] = true
+    n = n + 1
+    if not (l[pos] and (l[pos].v == val)) then
+      return false
+    end
+  end
+  if #l ~= n then return false end
+  for i=1,n-1 do
+    if l[i].s > l[i+1].s then return false end
+  end
+  return true
+end
+
+local dbg_zcoherence = function(self,k)
+  local x = xgetr(self,k,"zset")
+  return _z_coherence(x)
 end
 
 local zadd = function(self,k,...)
@@ -1195,6 +1223,8 @@ local methods = {
   -- server
   flushall = flushdb, -- () -> true
   flushdb = flushdb, -- () -> true
+  -- debug
+  dbg_zcoherence = dbg_zcoherence,
 }
 
 local new = function()

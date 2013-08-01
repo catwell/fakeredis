@@ -555,6 +555,9 @@ T:start("zsets"); do
     {{"A",10},{"B",20},{"C",30}}
   )
   T:eq( R:zadd("foo",30,"A",30.5,"D"), 1 )
+  if not TEST_REDIS_LUA then
+    T:yes( R:dbg_zcoherence("foo") )
+  end
   T:eq(
     R:zrange("foo",0,-1,{withscores=true}),
     {{"B",20},{"A",30},{"C",30},{"D",30.5}}
