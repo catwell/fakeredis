@@ -1020,20 +1020,20 @@ local _z_insert = function(x,ix,p)
 end
 
 local _z_remove = function(x,v)
-  local ix = assert(x.set[v])
-  local l = x.list
+  if not x.set[v] then return false end
+  local l,ix = x.list,x.set[v]
   assert(l[ix].v == v)
   table.remove(l,ix)
   for i=ix,#l do
     x.set[l[i].v] = x.set[l[i].v] - 1
   end
   x.set[v] = nil
+  return true
 end
 
 local _z_update = function(x,p)
   local l = x.list
-  local found = (not not x.set[p.v])
-  if found then _z_remove(x,p.v) end
+  local found = _z_remove(x,p.v)
   local ix = nil
   for i=1,#l do
     if l[i] > p then
@@ -1126,6 +1126,17 @@ local zrank = function(self,k,v)
   if r then
     return r-1
   else return nil end
+end
+
+local zrem = function(self,k,...)
+  k = chkarg(k)
+  local arg = getargs(...)
+  local x,r = xgetw(self,k,"zset"),0
+  for i=1,#arg do
+    if _z_remove(x,arg[i]) then r = r + 1 end
+  end
+  cleanup(self,k)
+  return r
 end
 
 local zrevrank = function(self,k,v)
@@ -1244,6 +1255,7 @@ local methods = {
   zincrby = zincrby, -- (k,score,v) -> score
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
+  zrem = zrem, -- (k,v1,...) -> #removed
   zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
   -- connection

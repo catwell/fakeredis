@@ -588,7 +588,21 @@ T:start("zsets"); do
   T:eq( R:zrevrank("nothing","E"), nil )
   T:eq( R:zrank("foo","nothing"), nil )
   T:eq( R:zrevrank("foo","nothing"), nil )
-  T:eq( R:del("foo"), 1 )
+  T:eq( R:zrem("foo","D","B","X"), 2 )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {{"E",-0.5},{"C",30},{"A",32.3}}
+  )
+  T:eq( R:zrem("foo","A","E"), 2 )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {{"C",30}}
+  )
+  T:eq( R:zrem("foo","A","C"), 1 )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {}
+  )
   T:rk_nil("foo")
 end; T:done()
 
