@@ -1031,6 +1031,25 @@ local _z_remove = function(x,v)
   return true
 end
 
+local _z_remove_range = function(x,i1,i2)
+  local l = x.list
+  i2 = i2 or i1
+  assert(
+    (i1 > 0) and
+    (i2 >= i1) and
+    (i2 <= #l)
+  )
+  local ix,n = i1,i2-i1+1
+  for i=1,n do
+    x.set[l[ix].v] = nil
+    table.remove(l,ix)
+  end
+  for i=ix,#l do
+    x.set[l[i].v] = x.set[l[i].v] - n
+  end
+  return n
+end
+
 local _z_update = function(x,p)
   local l = x.list
   local found = _z_remove(x,p.v)
@@ -1061,6 +1080,16 @@ local _z_coherence = function(x)
     if l[i].s > l[i+1].s then return false end
   end
   return true
+end
+
+local _z_normrange = function(l,i1,i2)
+  i1,i2 = assert(toint(i1)),assert(toint(i2))
+  if i1 < 0 then i1 = #l+i1 end
+  if i2 < 0 then i2 = #l+i2 end
+  i1,i2 = math.max(i1+1,1),i2+1
+  if (i2 < i1) or (i1 > #l) then return nil end
+  i2 = math.min(i2,#l)
+  return i1,i2
 end
 
 local dbg_zcoherence = function(self,k)
@@ -1106,12 +1135,8 @@ local _zranger = function(descending)
     else assert(opts == nil) end
     local x = xgetr(self,k,"zset")
     local l = x.list
-    i1,i2 = assert(toint(i1)),assert(toint(i2))
-    if i1 < 0 then i1 = #l+i1 end
-    if i2 < 0 then i2 = #l+i2 end
-    i1,i2 = math.max(i1+1,1),i2+1
-    if (i2 < i1) or (i1 > #l) then return {} end
-    i2 = math.min(i2,#l)
+    i1,i2 = _z_normrange(l,i1,i2)
+    if not i1 then return {} end
     local inc = 1
     if descending then
       i1 = #l - i1 + 1
@@ -1147,6 +1172,19 @@ local zrem = function(self,k,...)
   end
   cleanup(self,k)
   return r
+end
+
+local zremrangebyrank = function(self,k,i1,i2)
+  k = chkarg(k)
+  local x = xgetw(self,k,"zset")
+  i1,i2 = _z_normrange(x.list,i1,i2)
+  if not i1 then
+    cleanup(self,k)
+    return 0
+  end
+  local n = _z_remove_range(x,i1,i2)
+  cleanup(self,k)
+  return n
 end
 
 local zrevrange = _zranger(true)
@@ -1268,6 +1306,7 @@ local methods = {
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
   zrem = zrem, -- (k,v1,...) -> #removed
+  zremrangebyrank = zremrangebyrank, -- (k,start,stop) -> #removed
   zrevrange = zrevrange, -- (k,start,stop,[opts]) -> depends on opts
   zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score

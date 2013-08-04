@@ -616,6 +616,15 @@ T:start("zsets"); do
     {}
   )
   T:rk_nil("foo")
+  T:eq( R:zadd("foo",10,"A",20,"B",30,"C",40,"D",50,"E"), 5 )
+  T:eq( R:zremrangebyrank("foo",0,1), 2 )
+  T:eq( R:zremrangebyrank("foo",1,4), 2 )
+  T:eq( R:zrange("foo",0,-1), {"C"} )
+  T:eq( R:zadd("foo",10,"A",20,"B",30,"C",40,"D",50,"E"), 4 )
+  T:eq( R:zremrangebyrank("foo",-3,-2), 2 )
+  T:eq( R:zrange("foo",0,-1), {"A","B","E"} )
+  T:eq( R:zremrangebyrank("foo",0,-1), 3 )
+  T:rk_nil("foo")
 end; T:done()
 
 --- server
