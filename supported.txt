@@ -108,13 +108,13 @@
 [ ] zinterstore
 [x] zrange
 [ ] zrangebyscore
-[ ] zrank
+[x] zrank
 [ ] zrem
 [ ] zremrangebyrank
 [ ] zremrangebyscore
 [ ] zrevrange
 [ ] zrevrangebyscore
-[ ] zrevrank
+[x] zrevrank
 [x] zscore
 [ ] zunionstore
 

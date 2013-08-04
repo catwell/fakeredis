@@ -1120,6 +1120,22 @@ local zrange = function(self,k,i1,i2,opts)
   return r
 end
 
+local zrank = function(self,k,v)
+  local x = xgetr(self,k,"zset")
+  local r = x.set[v]
+  if r then
+    return r-1
+  else return nil end
+end
+
+local zrevrank = function(self,k,v)
+  local x = xgetr(self,k,"zset")
+  local r = x.set[v]
+  if r then
+    return #x.list-r
+  else return nil end
+end
+
 local zscore = function(self,k,v)
   local x = xgetr(self,k,"zset")
   local p = x.list[x.set[v]]
@@ -1224,9 +1240,11 @@ local methods = {
   sunionstore = sunionstore, -- (k0,k1,...) -> #set at k0
   -- zsets
   zadd = zadd, -- (k,score,member,[score,member,...])
-  zcard = chkargs_wrap(zcard,1), -- (v) -> n
+  zcard = chkargs_wrap(zcard,1), -- (k) -> n
   zincrby = zincrby, -- (k,score,v) -> score
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
+  zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
+  zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
   -- connection
   echo = chkargs_wrap(echo,1), -- (v) -> v
