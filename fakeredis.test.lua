@@ -571,6 +571,13 @@ T:start("zsets"); do
   T:eq( R:zscore("foo","nothing"), nil )
   T:eq( R:zscore("nothing","D"), nil )
   T:rk_nil("nothing")
+  T:eq( R:zincrby("foo",2.3,"A"), 32.3 )
+  T:eq( R:zincrby("foo",-0.5,"D"), 30 )
+  T:eq( R:zincrby("foo",-0.5,"E"), -0.5 )
+  T:eq(
+    R:zrange("foo",0,-1,{withscores=true}),
+    {{"E",-0.5},{"B",20},{"C",30},{"D",30},{"A",32.3}}
+  )
   T:eq( R:del("foo"), 1 )
   T:rk_nil("foo")
 end; T:done()

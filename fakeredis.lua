@@ -1084,6 +1084,16 @@ local zcard = function(self,k)
   return #x.list
 end
 
+local zincrby = function(self,k,n,v)
+  k,v = chkargs(2,k,v)
+  n = assert(tonumber(n))
+  local x = xgetw(self,k,"zset")
+  local p = x.list[x.set[v]]
+  local s = p and (p.s + n) or n
+  _z_update(x,_z_pair(s,v))
+  return s
+end
+
 local zrange = function(self,k,i1,i2,opts)
   k = chkarg(k)
   local withscores = false
@@ -1215,6 +1225,7 @@ local methods = {
   -- zsets
   zadd = zadd, -- (k,score,member,[score,member,...])
   zcard = chkargs_wrap(zcard,1), -- (v) -> n
+  zincrby = zincrby, -- (k,score,v) -> score
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
   -- connection
