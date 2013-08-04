@@ -566,6 +566,18 @@ T:start("zsets"); do
     R:zrange("foo",1,2,{withscores=true}),
     {{"A",30},{"C",30}}
   )
+  T:eq( R:zrange("foo",0,2), {"B","A","C"} )
+  T:eq( R:zrange("foo",1,3), {"A","C","D"} )
+  T:eq(
+    R:zrevrange("foo",0,-1,{withscores=true}),
+    {{"D",30.5},{"C",30},{"A",30},{"B",20}}
+  )
+  T:eq(
+    R:zrevrange("foo",1,2,{withscores=true}),
+    {{"C",30},{"A",30}}
+  )
+  T:eq( R:zrevrange("foo",0,2), {"D","C","A"} )
+  T:eq( R:zrevrange("foo",1,3), {"C","A","B"} )
   T:eq( R:zcard("foo"), 4 )
   T:eq( R:zscore("foo","D"), 30.5 )
   T:eq( R:zscore("foo","nothing"), nil )

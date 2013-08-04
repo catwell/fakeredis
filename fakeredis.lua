@@ -1094,31 +1094,41 @@ local zincrby = function(self,k,n,v)
   return s
 end
 
-local zrange = function(self,k,i1,i2,opts)
-  k = chkarg(k)
-  local withscores = false
-  if type(opts) == "table" then
-    withscores = opts.withscores
-  elseif type(opts) == "string" then
-    assert(opts:lower() == "withscores")
-    withscores = true
-  else assert(opts == nil) end
-  local x = xgetr(self,k,"zset")
-  local l = x.list
-  i1,i2 = assert(toint(i1)),assert(toint(i2))
-  if i1 < 0 then i1 = #l+i1 end
-  if i2 < 0 then i2 = #l+i2 end
-  i1,i2 = math.max(i1+1,1),i2+1
-  if (i2 < i1) or (i1 > #l) then return {} end
-  i2 = math.min(i2,#l)
-  local r = {}
-  if withscores then
-    for i=i1,i2 do r[#r+1] = {l[i].v,l[i].s} end
-  else
-    for i=i1,i2 do r[#r+1] = l[i].v end
+local _zranger = function(descending)
+  return function(self,k,i1,i2,opts)
+    k = chkarg(k)
+    local withscores = false
+    if type(opts) == "table" then
+      withscores = opts.withscores
+    elseif type(opts) == "string" then
+      assert(opts:lower() == "withscores")
+      withscores = true
+    else assert(opts == nil) end
+    local x = xgetr(self,k,"zset")
+    local l = x.list
+    i1,i2 = assert(toint(i1)),assert(toint(i2))
+    if i1 < 0 then i1 = #l+i1 end
+    if i2 < 0 then i2 = #l+i2 end
+    i1,i2 = math.max(i1+1,1),i2+1
+    if (i2 < i1) or (i1 > #l) then return {} end
+    i2 = math.min(i2,#l)
+    local inc = 1
+    if descending then
+      i1 = #l - i1 + 1
+      i2 = #l - i2 + 1
+      inc = -1
+    end
+    local r = {}
+    if withscores then
+      for i=i1,i2,inc do r[#r+1] = {l[i].v,l[i].s} end
+    else
+      for i=i1,i2,inc do r[#r+1] = l[i].v end
+    end
+    return r
   end
-  return r
 end
+
+local zrange = _zranger(false)
 
 local zrank = function(self,k,v)
   local x = xgetr(self,k,"zset")
@@ -1138,6 +1148,8 @@ local zrem = function(self,k,...)
   cleanup(self,k)
   return r
 end
+
+local zrevrange = _zranger(true)
 
 local zrevrank = function(self,k,v)
   local x = xgetr(self,k,"zset")
@@ -1256,6 +1268,7 @@ local methods = {
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
   zrem = zrem, -- (k,v1,...) -> #removed
+  zrevrange = zrevrange, -- (k,start,stop,[opts]) -> depends on opts
   zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
   -- connection

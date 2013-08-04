@@ -112,7 +112,7 @@
 [x] zrem
 [ ] zremrangebyrank
 [ ] zremrangebyscore
-[ ] zrevrange
+[x] zrevrange
 [ ] zrevrangebyscore
 [x] zrevrank
 [x] zscore
