@@ -113,7 +113,7 @@
 [x] zremrangebyrank
 [ ] zremrangebyscore
 [x] zrevrange
-[ ] zrevrangebyscore
+[x] zrevrangebyscore
 [x] zrevrank
 [x] zscore
 [ ] zunionstore
