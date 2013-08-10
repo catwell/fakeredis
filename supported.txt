@@ -107,7 +107,7 @@
 [x] zincrby
 [ ] zinterstore
 [x] zrange
-[ ] zrangebyscore
+[x] zrangebyscore
 [x] zrank
 [x] zrem
 [x] zremrangebyrank

@@ -1155,6 +1155,85 @@ end
 
 local zrange = _zranger(false)
 
+local _zrbs_opts = function(...)
+  local arg = {...}
+  if #arg == 0 then return {} end
+  local ix,opts = 1,{}
+  while type(arg[ix]) == "string" do
+    if arg[ix] == "withscores" then
+      opts.withscores = true
+      ix = ix + 1
+    elseif arg[ix] == "limit" then
+      opts.limit = {
+        offset = assert(toint(arg[ix+1])),
+        count = assert(toint(arg[ix+2])),
+      }
+      ix = ix + 3
+    else error("input") end
+  end
+  if type(arg[ix]) == "table" then
+    local _o = arg[ix]
+    opts.withscores = opts.withscores or _o.withscores
+    if _o.limit then
+      opts.limit = {
+        offset = assert(toint(_o.limit.offset or _o.limit[1])),
+        count = assert(toint(_o.limit.count or _o.limit[2])),
+      }
+    end
+    ix = ix + 1
+  end
+  assert(arg[ix] == nil)
+  if opts.limit then
+    assert(
+      (opts.limit.count >= 0) and
+      (opts.limit.offset  >= 0)
+    )
+  end
+  return opts
+end
+
+local zrangebyscore = function(self,k,s1,s2,...)
+  k,s1,s2 = chkargs(3,k,s1,s2)
+  local opts = _zrbs_opts(...)
+  local x = xgetr(self,k,"zset")
+  local s1_incl,s2_incl = true,true
+  if s1:sub(1,1) == "(" then
+    s1,s1_incl = s1:sub(2,-1),false
+  end
+  s1 = assert(tonumber(s1))
+  if s2:sub(1,1) == "(" then
+    s2,s2_incl = s2:sub(2,-1),false
+  end
+  s2 = assert(tonumber(s2))
+  if s2 < s1 then return {} end
+  local l = x.list
+  local i1,i2
+  local fst,lst = l[1].s,l[#l].s
+  if (fst > s2) or ((not s2_incl) and (fst == s2)) then return {} end
+  if (lst < s1) or ((not s1_incl) and (lst == s1)) then return {} end
+  if (fst > s1) or (s1_incl and (fst == s1)) then i1 = 1 end
+  if (lst < s2) or (s2_incl and (lst == s2)) then i2 = #l end
+  for i=1,#l do
+    if (i1 and i2) then break end
+    if (not i1) then
+      if l[i].s > s1 then i1 = i end
+      if s1_incl and l[i].s == s1 then i1 = i end
+    end
+    if (not i2) then
+      if l[i].s > s2 then i2 = i-1 end
+      if (not s2_incl) and l[i].s == s2 then i2 = i-1 end
+    end
+  end
+  assert(i1 and i2)
+  if opts.limit then
+    if opts.limit.count == 0 then return {} end
+    i1 = i1 + opts.limit.offset
+    if i1 > i2 then return {} end
+    i2 = math.min(i2,i1+opts.limit.count-1)
+  end
+  return zrange(self,k,i1-1,i2-1,opts)
+end
+
 local zrank = function(self,k,v)
   local x = xgetr(self,k,"zset")
   local r = x.set[v]
@@ -1304,6 +1383,7 @@ local methods = {
   zcard = chkargs_wrap(zcard,1), -- (k) -> n
   zincrby = zincrby, -- (k,score,v) -> score
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
+  zrangebyscore = zrangebyscore, -- (k,min,max,[opts]) -> depends on opts
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
   zrem = zrem, -- (k,v1,...) -> #removed
   zremrangebyrank = zremrangebyrank, -- (k,start,stop) -> #removed

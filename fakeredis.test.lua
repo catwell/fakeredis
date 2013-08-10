@@ -590,6 +590,15 @@ T:start("zsets"); do
     R:zrange("foo",0,-1,{withscores=true}),
     {{"E",-0.5},{"B",20},{"C",30},{"D",30},{"A",32.3}}
   )
+  T:eq( R:zrangebyscore("foo",20,30), {"B","C","D"} )
+  T:eq( R:zrangebyscore("foo","(20",30), {"C","D"} )
+  T:eq( R:zrangebyscore("foo",20,"(30","withscores"), {{"B",20}} )
+  T:eq( R:zrangebyscore("foo",-5,40), {"E","B","C","D","A"} )
+  T:eq( R:zrangebyscore("foo",-5,40,"limit",1,3), {"B","C","D"} )
+  T:eq(
+    R:zrangebyscore("foo",-5,40,{limit={4,9},withscores=true}),
+    {{"A",32.3}}
+  )
   T:eq( R:zrank("foo","E"), 0 )
   T:eq( R:zrank("foo","B"), 1 )
   T:eq( R:zrank("foo","A"), 4 )
