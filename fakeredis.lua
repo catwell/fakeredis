@@ -1164,8 +1164,10 @@ local _zrbs_limits = function(x,s1,s2,descending)
   end
   assert(i1 and i2)
   if descending then
-    return #l-i2+1,#l-i1+1
-  else return i1,i2 end
+    return #l-i2,#l-i1
+  else
+    return i1-1,i2-1
+  end
 end
 
 local dbg_zcoherence = function(self,k)
@@ -1254,9 +1256,9 @@ local _zrangerbyscore = function(descending)
       i2 = math.min(i2,i1+opts.limit.count-1)
     end
     if descending then
-      return zrevrange(self,k,i1-1,i2-1,opts)
+      return zrevrange(self,k,i1,i2,opts)
     else
-      return zrange(self,k,i1-1,i2-1,opts)
+      return zrange(self,k,i1,i2,opts)
     end
   end
 end
@@ -1294,6 +1296,14 @@ local zremrangebyrank = function(self,k,i1,i2)
   local n = _z_remove_range(x,i1,i2)
   cleanup(self,k)
   return n
+end
+
+local zremrangebyscore = function(self,k,s1,s2)
+  local x = xgetr(self,k,"zset")
+  local i1,i2 = _zrbs_limits(x,s1,s2,false)
+  if not (i1 and i2) then return 0 end
+  assert(i2 >= i1)
+  return zremrangebyrank(self,k,i1,i2)
 end
 
 local zrevrank = function(self,k,v)
@@ -1416,6 +1426,7 @@ local methods = {
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
   zrem = zrem, -- (k,v1,...) -> #removed
   zremrangebyrank = zremrangebyrank, -- (k,start,stop) -> #removed
+  zremrangebyscore = chkargs_wrap(zremrangebyscore,3), -- (k,min,max) -> #removed
   zrevrange = zrevrange, -- (k,start,stop,[opts]) -> depends on opts
   zrevrangebyscore = zrevrangebyscore, -- (k,min,max,[opts]) -> depends on opts
   zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank

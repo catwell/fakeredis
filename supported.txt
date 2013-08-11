@@ -111,7 +111,7 @@
 [x] zrank
 [x] zrem
 [x] zremrangebyrank
-[ ] zremrangebyscore
+[x] zremrangebyscore
 [x] zrevrange
 [x] zrevrangebyscore
 [x] zrevrank
