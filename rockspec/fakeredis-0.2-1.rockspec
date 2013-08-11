@@ -1,8 +1,9 @@
 package = "fakeredis"
-version = "scm-1"
+version = "0.2-1"
 
 source = {
    url = "git://github.com/catwell/fakeredis.git",
+   branch = "0.2",
 }
 
 description = {
