@@ -1092,6 +1092,82 @@ local _z_normrange = function(l,i1,i2)
   return i1,i2
 end
 
+local _zrbs_opts = function(...)
+  local arg = {...}
+  if #arg == 0 then return {} end
+  local ix,opts = 1,{}
+  while type(arg[ix]) == "string" do
+    if arg[ix] == "withscores" then
+      opts.withscores = true
+      ix = ix + 1
+    elseif arg[ix] == "limit" then
+      opts.limit = {
+        offset = assert(toint(arg[ix+1])),
+        count = assert(toint(arg[ix+2])),
+      }
+      ix = ix + 3
+    else error("input") end
+  end
+  if type(arg[ix]) == "table" then
+    local _o = arg[ix]
+    opts.withscores = opts.withscores or _o.withscores
+    if _o.limit then
+      opts.limit = {
+        offset = assert(toint(_o.limit.offset or _o.limit[1])),
+        count = assert(toint(_o.limit.count or _o.limit[2])),
+      }
+    end
+    ix = ix + 1
+  end
+  assert(arg[ix] == nil)
+  if opts.limit then
+    assert(
+      (opts.limit.count >= 0) and
+      (opts.limit.offset  >= 0)
+    )
+  end
+  return opts
+end
+
+local _zrbs_limits = function(x,s1,s2,descending)
+  local s1_incl,s2_incl = true,true
+  if s1:sub(1,1) == "(" then
+    s1,s1_incl = s1:sub(2,-1),false
+  end
+  s1 = assert(tonumber(s1))
+  if s2:sub(1,1) == "(" then
+    s2,s2_incl = s2:sub(2,-1),false
+  end
+  s2 = assert(tonumber(s2))
+  if descending then
+    s1,s2 = s2,s1
+    s1_incl,s2_incl = s2_incl,s1_incl
+  end
+  if s2 < s1 then return nil end
+  local l = x.list
+  local i1,i2
+  local fst,lst = l[1].s,l[#l].s
+  if (fst > s2) or ((not s2_incl) and (fst == s2)) then return nil end
+  if (lst < s1) or ((not s1_incl) and (lst == s1)) then return nil end
+  if (fst > s1) or (s1_incl and (fst == s1)) then i1 = 1 end
+  if (lst < s2) or (s2_incl and (lst == s2)) then i2 = #l end
+  for i=1,#l do
+    if (i1 and i2) then break end
+    if (not i1) then
+      if l[i].s > s1 then i1 = i end
+      if s1_incl and l[i].s == s1 then i1 = i end
+    end
+    if (not i2) then
+      if l[i].s > s2 then i2 = i-1 end
+      if (not s2_incl) and l[i].s == s2 then i2 = i-1 end
+    end
+  end
+  assert(i1 and i2)
+  if descending then
+    return #l-i2+1,#l-i1+1
+  else return i1,i2 end
+end
+
 local dbg_zcoherence = function(self,k)
   local x = xgetr(self,k,"zset")
   return _z_coherence(x)
@@ -1111,6 +1187,14 @@ end
 local zcard = function(self,k)
   local x = xgetr(self,k,"zset")
   return #x.list
+end
+
+local zcount = function(self,k,s1,s2)
+  local x = xgetr(self,k,"zset")
+  local i1,i2 = _zrbs_limits(x,s1,s2,false)
+  if not (i1 and i2) then return 0 end
+  assert(i2 >= i1)
+  return i2 - i1 + 1
 end
 
 local zincrby = function(self,k,n,v)
@@ -1156,82 +1240,13 @@ end
 local zrange = _zranger(false)
 local zrevrange = _zranger(true)
 
-local _zrbs_opts = function(...)
-  local arg = {...}
-  if #arg == 0 then return {} end
-  local ix,opts = 1,{}
-  while type(arg[ix]) == "string" do
-    if arg[ix] == "withscores" then
-      opts.withscores = true
-      ix = ix + 1
-    elseif arg[ix] == "limit" then
-      opts.limit = {
-        offset = assert(toint(arg[ix+1])),
-        count = assert(toint(arg[ix+2])),
-      }
-      ix = ix + 3
-    else error("input") end
-  end
-  if type(arg[ix]) == "table" then
-    local _o = arg[ix]
-    opts.withscores = opts.withscores or _o.withscores
-    if _o.limit then
-      opts.limit = {
-        offset = assert(toint(_o.limit.offset or _o.limit[1])),
-        count = assert(toint(_o.limit.count or _o.limit[2])),
-      }
-    end
-    ix = ix + 1
-  end
-  assert(arg[ix] == nil)
-  if opts.limit then
-    assert(
-      (opts.limit.count >= 0) and
-      (opts.limit.offset  >= 0)
-    )
-  end
-  return opts
-end
-
 local _zrangerbyscore = function(descending)
   return function(self,k,s1,s2,...)
     k,s1,s2 = chkargs(3,k,s1,s2)
     local opts = _zrbs_opts(...)
     local x = xgetr(self,k,"zset")
-    local s1_incl,s2_incl = true,true
-    if s1:sub(1,1) == "(" then
-      s1,s1_incl = s1:sub(2,-1),false
-    end
-    s1 = assert(tonumber(s1))
-    if s2:sub(1,1) == "(" then
-      s2,s2_incl = s2:sub(2,-1),false
-    end
-    s2 = assert(tonumber(s2))
-    if descending then
-      s1,s2 = s2,s1
-      s1_incl,s2_incl = s2_incl,s1_incl
-    end
-    if s2 < s1 then return {} end
-    local l = x.list
-    local i1,i2
-    local fst,lst = l[1].s,l[#l].s
-    if (fst > s2) or ((not s2_incl) and (fst == s2)) then return {} end
-    if (lst < s1) or ((not s1_incl) and (lst == s1)) then return {} end
-    if (fst > s1) or (s1_incl and (fst == s1)) then i1 = 1 end
-    if (lst < s2) or (s2_incl and (lst == s2)) then i2 = #l end
-    for i=1,#l do
-      if (i1 and i2) then break end
-      if (not i1) then
-        if l[i].s > s1 then i1 = i end
-        if s1_incl and l[i].s == s1 then i1 = i end
-      end
-      if (not i2) then
-        if l[i].s > s2 then i2 = i-1 end
-        if (not s2_incl) and l[i].s == s2 then i2 = i-1 end
-      end
-    end
-    assert(i1 and i2)
-    if descending then i1, i2 = #l-i2+1, #l-i1+1 end
+    local i1,i2 = _zrbs_limits(x,s1,s2,descending)
+    if not (i1 and i2) then return {} end
     if opts.limit then
       if opts.limit.count == 0 then return {} end
       i1 = i1 + opts.limit.offset
@@ -1394,6 +1409,7 @@ local methods = {
   -- zsets
   zadd = zadd, -- (k,score,member,[score,member,...])
   zcard = chkargs_wrap(zcard,1), -- (k) -> n
+  zcount = chkargs_wrap(zcount,3), -- (k,min,max) -> count
   zincrby = zincrby, -- (k,score,v) -> score
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zrangebyscore = zrangebyscore, -- (k,min,max,[opts]) -> depends on opts

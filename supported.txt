@@ -103,7 +103,7 @@
 
 [x] zadd
 [x] zcard
-[ ] zcount
+[x] zcount
 [x] zincrby
 [ ] zinterstore
 [x] zrange

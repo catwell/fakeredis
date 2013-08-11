@@ -608,6 +608,9 @@ T:start("zsets"); do
     R:zrevrangebyscore("foo",40,-5,{limit={4,9},withscores=true}),
     {{"E",-0.5}}
   )
+  T:eq( R:zcount("foo",-10,-5), 0 )
+  T:eq( R:zcount("foo","(-10",50), 5 )
+  T:eq( R:zcount("foo","(20",30), 2 )
   T:eq( R:zrank("foo","E"), 0 )
   T:eq( R:zrank("foo","B"), 1 )
   T:eq( R:zrank("foo","A"), 4 )
