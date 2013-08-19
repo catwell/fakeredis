@@ -675,6 +675,19 @@ T:start("zsets"); do
     {{"A",10},{"B",20},{"X",21},{"C",33}}
   )
   T:eq( R:del("z1","z2","z3"), 3 )
+  T:eq( R:zadd("z1",10,"A",20,"B",30,"C"), 3 )
+  T:eq( R:zadd("z2",3,"A",7,"X",11,"C"), 3 )
+  T:eq( R:zinterstore("z3",2,"z1","z2"), 2 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"A",13},{"C",41}}
+  )
+  T:eq( R:zinterstore("z3",2,"z3","z2",{aggregate="max",weights={1,4}}), 2 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"A",13},{"C",44}}
+  )
+  T:eq( R:del("z1","z2","z3"), 3 )
 end; T:done()
 
 --- server

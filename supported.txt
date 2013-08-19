@@ -105,7 +105,7 @@
 [x] zcard
 [x] zcount
 [x] zincrby
-[ ] zinterstore
+[x] zinterstore
 [x] zrange
 [x] zrangebyscore
 [x] zrank

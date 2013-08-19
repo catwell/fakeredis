@@ -1132,6 +1132,7 @@ end
 local _z_store_params = function(dest,numkeys,...)
   dest = chkarg(dest)
   numkeys = assert(toint(numkeys))
+  assert(numkeys > 0)
   local arg = {...}
   assert(#arg >= numkeys)
   local ks = {}
@@ -1256,6 +1257,49 @@ local zincrby = function(self,k,n,v)
   local s = p and (p.s + n) or n
   _z_update(x,_z_pair(s,v))
   return s
+end
+
+local zinterstore = function(self,...)
+  local params = _z_store_params(...)
+  local x = xdefv("zset")
+  local aggregate
+  if params.aggregate == "sum" then
+    aggregate = function(x,y) return x+y end
+  elseif params.aggregate == "min" then
+    aggregate = math.min
+  elseif params.aggregate == "max" then
+    aggregate = math.max
+  else error() end
+  local y = xgetr(self,params.keys[1],"zset")
+  local p1,p2
+  for j=1,#y.list do
+    p1 = _z_pair(y.list[j].s,y.list[j].v)
+    _z_update(x,p1)
+  end
+  for i=2,#params.keys do
+    y = xgetr(self,params.keys[i],"zset")
+    local to_remove,to_update = {},{}
+    for j=1,#x.list do
+      p1 = x.list[j]
+      if y.set[p1.v] then
+        p2 = _z_pair(
+          aggregate(
+            p1.s,
+            params.weights[i] * y.list[y.set[p1.v]].s
+          ),
+          p1.v
+        )
+        to_update[#to_update+1] = p2
+      else
+        to_remove[#to_remove+1] = p1.v
+      end
+    end
+    for j=1,#to_remove do _z_remove(x,to_remove[j]) end
+    for j=1,#to_update do _z_update(x,to_update[j]) end
+  end
+  local r = #x.list
+  if r > 0 then self[params.dest] = {ktype="zset",value=x} end
+  return r
 end
 
 local _zranger = function(descending)
@@ -1385,11 +1429,12 @@ local zunionstore = function(self,...)
     default_score = -math.huge
     aggregate = math.max
   else error() end
+  local y,p1,p2
   for i=1,#params.keys do
-    local y = xgetr(self,params.keys[i],"zset")
+    y = xgetr(self,params.keys[i],"zset")
     for j=1,#y.list do
-      local p1 = y.list[j]
-      local p2 = _z_pair(
+      p1 = y.list[j]
+      p2 = _z_pair(
         aggregate(
           params.weights[i] * p1.s,
           x.set[p1.v] and x.list[x.set[p1.v]].s or default_score
@@ -1503,6 +1548,7 @@ local methods = {
   zcard = chkargs_wrap(zcard,1), -- (k) -> n
   zcount = chkargs_wrap(zcount,3), -- (k,min,max) -> count
   zincrby = zincrby, -- (k,score,v) -> score
+  zinterstore = zinterstore, -- (k,numkeys,k1,...,[opts]) -> card
   zrange = zrange, -- (k,start,stop,[opts]) -> depends on opts
   zrangebyscore = zrangebyscore, -- (k,min,max,[opts]) -> depends on opts
   zrank = chkargs_wrap(zrank,2), -- (k,v) -> rank
