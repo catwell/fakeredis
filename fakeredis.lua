@@ -1129,6 +1129,55 @@ local _zrbs_opts = function(...)
   return opts
 end
 
+local _z_store_params = function(dest,numkeys,...)
+  dest = chkarg(dest)
+  numkeys = assert(toint(numkeys))
+  local arg = {...}
+  assert(#arg >= numkeys)
+  local ks = {}
+  for i=1,numkeys do ks[i] = chkarg(arg[i]) end
+  local ix,opts = numkeys+1,{}
+  while type(arg[ix]) == "string" do
+    if arg[ix] == "weights" then
+      opts.weights = {}
+      ix = ix + 1
+      for i=1,numkeys do
+        opts.weights[i] = assert(toint(arg[ix]))
+        ix = ix + 1
+      end
+    elseif arg[ix] == "aggregate" then
+      opts.aggregate = assert(chkarg(arg[ix+1]))
+      ix = ix + 2
+    else error("input") end
+  end
+  if type(arg[ix]) == "table" then
+    local _o = arg[ix]
+    opts.weights = opts.weights or _o.weights
+    opts.aggregate = opts.aggregate or _o.aggregate
+    ix = ix + 1
+  end
+  assert(arg[ix] == nil)
+  if opts.aggregate then
+    assert(
+      (opts.aggregate == "sum") or
+      (opts.aggregate == "min") or
+      (opts.aggregate == "max")
+    )
+  else opts.aggregate = "sum" end
+  if opts.weights then
+    assert(#opts.weights == numkeys)
+    for i=1,#opts.weights do
+      assert(type(opts.weights[i]) == "number")
+    end
+  else
+    opts.weights = {}
+    for i=1,numkeys do opts.weights[i] = 1 end
+  end
+  opts.keys = ks
+  opts.dest = dest
+  return opts
+end
+
 local _zrbs_limits = function(x,s1,s2,descending)
   local s1_incl,s2_incl = true,true
   if s1:sub(1,1) == "(" then
@@ -1322,6 +1371,39 @@ local zscore = function(self,k,v)
   else return nil end
 end
 
+local zunionstore = function(self,...)
+  local params = _z_store_params(...)
+  local x = xdefv("zset")
+  local default_score,aggregate
+  if params.aggregate == "sum" then
+    default_score = 0
+    aggregate = function(x,y) return x+y end
+  elseif params.aggregate == "min" then
+    default_score = math.huge
+    aggregate = math.min
+  elseif params.aggregate == "max" then
+    default_score = -math.huge
+    aggregate = math.max
+  else error() end
+  for i=1,#params.keys do
+    local y = xgetr(self,params.keys[i],"zset")
+    for j=1,#y.list do
+      local p1 = y.list[j]
+      local p2 = _z_pair(
+        aggregate(
+          params.weights[i] * p1.s,
+          x.set[p1.v] and x.list[x.set[p1.v]].s or default_score
+        ),
+        p1.v
+      )
+      _z_update(x,p2)
+    end
+  end
+  local r = #x.list
+  if r > 0 then self[params.dest] = {ktype="zset",value=x} end
+  return r
+end
+
 -- connection
 
 local echo = function(self,v)
@@ -1431,6 +1513,7 @@ local methods = {
   zrevrangebyscore = zrevrangebyscore, -- (k,min,max,[opts]) -> depends on opts
   zrevrank = chkargs_wrap(zrevrank,2), -- (k,v) -> rank
   zscore = chkargs_wrap(zscore,2), -- (k,v) -> score
+  zunionstore = zunionstore, -- (k,numkeys,k1,...,[opts]) -> card
   -- connection
   echo = chkargs_wrap(echo,1), -- (v) -> v
   ping = ping, -- () -> true

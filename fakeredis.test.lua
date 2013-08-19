@@ -651,6 +651,30 @@ T:start("zsets"); do
   T:eq( R:zrange("foo",0,-1), {"A","B","E"} )
   T:eq( R:zremrangebyrank("foo",0,-1), 3 )
   T:rk_nil("foo")
+  T:eq( R:zadd("z1",10,"A",20,"B",30,"C"), 3 )
+  T:eq( R:zadd("z2",3,"A",7,"X",11,"C"), 3 )
+  T:eq( R:zunionstore("z3",2,"z1","z2"), 4 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"X",7},{"A",13},{"B",20},{"C",41}}
+  )
+  T:eq( R:zunionstore("z3",3,"z1","z2","zxxx","weights",1,-3,2), 4 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"X",-21},{"C",-3},{"A",1},{"B",20}}
+  )
+  T:eq( R:zadd("z3",30,"C"), 0 )
+  T:eq( R:zunionstore("z3",3,"z1","z2","z3","aggregate","min"), 4 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"X",-21},{"A",1},{"C",11},{"B",20}}
+  )
+  T:eq( R:zunionstore("z3",2,"z1","z2","aggregate","max","weights",1,3), 4 )
+  T:eq(
+    R:zrange("z3",0,-1,"withscores"),
+    {{"A",10},{"B",20},{"X",21},{"C",33}}
+  )
+  T:eq( R:del("z1","z2","z3"), 3 )
 end; T:done()
 
 --- server
