@@ -34,7 +34,7 @@
 [x] getset
 [x] incr
 [x] incrby
-[ ] incrbyfloat
+[x] incrbyfloat
 [x] mget
 [x] mset
 [x] msetnx
@@ -53,7 +53,7 @@
 [x] hget
 [x] hgetall
 [x] hincrby
-[ ] hincrbyfloat
+[x] hincrbyfloat
 [x] hkeys
 [x] hlen
 [x] hmget
