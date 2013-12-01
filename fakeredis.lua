@@ -522,11 +522,19 @@ local hmget = function(self,k,k2s)
   return r
 end
 
-local hmset = function(self,k,m)
+local hmset = function(self,k,...)
   k = chkarg(k)
-  assert((type(m) == "table"))
-  local x = xgetw(self,k,"hash")
-  for _k,v in pairs(m) do x[chkarg(_k)] = chkarg(v) end
+  local arg = {...}
+  if type(arg[1]) == "table" then
+    assert(#arg == 1)
+    local x = xgetw(self,k,"hash")
+    for _k,v in pairs(arg[1]) do x[chkarg(_k)] = chkarg(v) end
+  else
+    assert(#arg % 2 == 0)
+    local x = xgetw(self,k,"hash")
+    local t = getargs(...)
+    for i=1,#t,2 do x[t[i]] = t[i+1] end
+  end
   return true
 end
 
