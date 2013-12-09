@@ -128,6 +128,11 @@ T:start("strings"); do
   T:eq( R:get("foo"), "5200" )
   T:eq( R:del("foo"), 1 )
   T:rk_nil( "foo" ); T:rk_nil( "spam" ); T:rk_nil( "chunky" )
+  T:rk_nil( "get" )
+  T:eq( R:set("get","foo"), true )
+  T:eq( R:get("get"), "foo")
+  T:eq( R:del("get"), 1 )
+  T:eq( R:get("get"), nil )
 end; T:done()
 
 --- bit operations
