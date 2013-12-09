@@ -4,6 +4,16 @@ local ok,bit = pcall(require,"bit")
 if not ok then bit = bit32 end
 assert(type(bit) == "table", "module for bitops not found")
 
+--- default sleep
+
+local default_sleep
+do
+  local ok,mod = pcall(require,"socket")
+  if ok and type(mod) == "table" then
+    default_sleep = mod.sleep
+  end
+end
+
 --- Helpers
 
 local xdefv = function(ktype)
@@ -576,9 +586,14 @@ local _l_len = function(x)
   return x.tail - x.head
 end
 
-local _block_for = function(timeout)
+local _block_for = function(self,timeout)
   if timeout > 0 then
-    (require "socket").sleep(timeout)
+    local sleep = self.sleep or default_sleep
+    if type(sleep) == "function" then
+      sleep(timeout)
+    else
+      error("sleep function unavailable",0)
+    end
   else
     error("operation would block",0)
   end
@@ -605,7 +620,7 @@ local blpop = function(self,...)
       return {k,v}
     else self[k] = nil end
   end
-  _block_for(timeout)
+  _block_for(self,timeout)
 end
 
 local brpop = function(self,...)
@@ -627,13 +642,13 @@ local brpop = function(self,...)
       return {k,v}
     else self[k] = nil end
   end
-  _block_for(timeout)
+  _block_for(self,timeout)
 end
 
 local brpoplpush = function(self,k1,k2,timeout)
   k1,k2 = chkargs(2,k1,k2)
   timeout = toint(timeout)
-  if not self[k1] then _block_for(timeout) end
+  if not self[k1] then _block_for(self,timeout) end
   return rpoplpush(self,k1,k2)
 end
 
