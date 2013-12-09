@@ -302,7 +302,8 @@ local decr = function(self,k)
 end
 
 local decrby = function(self,k,n)
-  assert(type(n) == "number")
+  n = toint(n)
+  assert(n,"ERR value is not an integer or out of range")
   return incrby(self,k,-n)
 end
 
@@ -328,7 +329,8 @@ end
 
 getrange = function(self,k,i1,i2)
   k = chkarg(k)
-  assert( (type(i1) == "number") and (type(i2) == "number") )
+  i1,i2 = toint(i1),toint(i2)
+  assert(i1 and i2)
   local x = xgetr(self,k,"string")
   x = x[1] or ""
   if i1 >= 0 then i1 = i1 + 1 end
@@ -436,7 +438,8 @@ end
 
 local setrange = function(self,k,i,s)
   local k,s = chkargs(2,k,s)
-  assert( (type(i) == "number") and  (i >= 0) )
+  i = toint(i)
+  assert(i and (i >= 0))
   local x = xgetw(self,k,"string")
   local y = x[1] or ""
   local ly,ls = #y,#s
@@ -654,7 +657,7 @@ end
 
 local lindex = function(self,k,i)
   k = chkarg(k)
-  assert(type(i) == "number")
+  i = assert(toint(i))
   local x = xgetr(self,k,"list")
   return x[_l_real_i(x,i)]
 end
@@ -718,7 +721,8 @@ end
 
 local lrange = function(self,k,i1,i2)
   k = chkarg(k)
-  assert( (type(i1) == "number") and (type(i2) == "number") )
+  i1,i2 = toint(i1),toint(i2)
+  assert(i1 and i2)
   local x,r = xgetr(self,k,"list"),{}
   i1 = math.max(_l_real_i(x,i1),x.head+1)
   i2 = math.min(_l_real_i(x,i2),x.tail)
@@ -759,7 +763,7 @@ end
 
 local lrem = function(self,k,count,v)
   k,v = chkarg(k),chkarg(v)
-  assert(type(count) == "number")
+  count = assert(toint(count))
   if not self.data[k] then return 0 end
   local x = xgetw(self,k,"list")
   local n,last = 0,nil
@@ -781,7 +785,7 @@ end
 
 local lset = function(self,k,i,v)
   k,v = chkarg(k),chkarg(v)
-  assert(type(i) == "number")
+  i = assert(toint(i))
   if not self.data[k] then
     error("ERR no such key")
   end
@@ -796,7 +800,8 @@ end
 
 local ltrim = function(self,k,i1,i2)
   k = chkarg(k)
-  assert( (type(i1) == "number") and (type(i2) == "number") )
+  i1,i2 = toint(i1),toint(i2)
+  assert(i1 and i2)
   local x = xgetw(self,k,"list")
   i1,i2 = _l_real_i(x,i1),_l_real_i(x,i2)
   for i=x.head+1,i1-1 do x[i] = nil end
