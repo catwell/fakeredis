@@ -28,30 +28,30 @@ local xdefv = function(ktype)
 end
 
 local xgetr = function(self,k,ktype)
-  if self[k] then
+  if self.data[k] then
     assert(
-      (self[k].ktype == ktype),
+      (self.data[k].ktype == ktype),
       "ERR Operation against a key holding the wrong kind of value"
     )
-    assert(self[k].value)
-    return self[k].value
+    assert(self.data[k].value)
+    return self.data[k].value
   else return xdefv(ktype) end
 end
 
 local xgetw = function(self,k,ktype)
-  if self[k] and self[k].value then
+  if self.data[k] and self.data[k].value then
     assert(
-      (self[k].ktype == ktype),
+      (self.data[k].ktype == ktype),
       "ERR Operation against a key holding the wrong kind of value"
     )
   else
-    self[k] = {ktype=ktype,value=xdefv(ktype)}
+    self.data[k] = {ktype=ktype,value=xdefv(ktype)}
   end
-  return self[k].value
+  return self.data[k].value
 end
 
 local empty = function(self,k)
-  local v,t = self[k].value,self[k].ktype
+  local v,t = self.data[k].value,self.data[k].ktype
   if t == nil then
     return true
   elseif t == "string" then
@@ -73,7 +73,7 @@ local empty = function(self,k)
 end
 
 local cleanup = function(self,k)
-  if empty(self,k) then self[k] = nil end
+  if empty(self,k) then self.data[k] = nil end
 end
 
 local toint = function(x)
@@ -149,14 +149,14 @@ local del = function(self,...)
   local arg = getargs(...)
   local r = 0
   for i=1,#arg do
-    if self[arg[i]] then r = r + 1 end
-    self[arg[i]] = nil
+    if self.data[arg[i]] then r = r + 1 end
+    self.data[arg[i]] = nil
   end
   return r
 end
 
 local exists = function(self,k)
-  return not not self[k]
+  return not not self.data[k]
 end
 
 local keys = function(self,pattern)
@@ -191,18 +191,18 @@ local keys = function(self,pattern)
   local lp = "^" .. table.concat(t):gsub("[%^%$%(%)%.%+]","%%%0")
     :gsub("\\","%%"):gsub("%*",".*"):gsub("%?",".") .. "$"
   local r = {}
-  for k,_ in pairs(self) do
+  for k,_ in pairs(self.data) do
     if k:match(lp) then r[#r+1] = k end
   end
   return r
 end
 
 local _type = function(self,k)
-  return self[k] and self[k].ktype or "none"
+  return self.data[k] and self.data[k].ktype or "none"
 end
 
 local randomkey = function(self)
-  local ks = lset_to_list(self)
+  local ks = lset_to_list(self.data)
   local n = #ks
   if n > 0 then
     return ks[math.random(1,n)]
@@ -210,14 +210,14 @@ local randomkey = function(self)
 end
 
 local rename = function(self,k,k2)
-  assert((k ~= k2) and self[k])
-  self[k2] = self[k]
-  self[k] = nil
+  assert((k ~= k2) and self.data[k])
+  self.data[k2] = self.data[k]
+  self.data[k] = nil
   return true
 end
 
 local renamenx = function(self,k,k2)
-  if self[k2] then
+  if self.data[k2] then
     return false
   else
     return rename(self,k,k2)
@@ -383,14 +383,14 @@ end
 local msetnx = function(self,...)
   local argmap = getargs_as_map(...)
   for k,_ in pairs(argmap) do
-    if self[k] then return false end
+    if self.data[k] then return false end
   end
   for k,v in pairs(argmap) do set(self,k,v) end
   return true
 end
 
 set = function(self,k,v)
-  self[k] = {ktype="string",value={v}}
+  self.data[k] = {ktype="string",value={v}}
   return true
 end
 
@@ -427,7 +427,7 @@ local setbit = function(self,k,offset,b)
 end
 
 local setnx = function(self,k,v)
-  if self[k] then
+  if self.data[k] then
     return false
   else
     return set(self,k,v)
@@ -616,9 +616,9 @@ local blpop = function(self,...)
       if l > 1 then
         x.head = x.head + 1
         x[x.head] = nil
-      else self[k] = nil end
+      else self.data[k] = nil end
       return {k,v}
-    else self[k] = nil end
+    else self.data[k] = nil end
   end
   _block_for(self,timeout)
 end
@@ -638,9 +638,9 @@ local brpop = function(self,...)
       if l > 1 then
         x[x.tail] = nil
         x.tail = x.tail - 1
-      else self[k] = nil end
+      else self.data[k] = nil end
       return {k,v}
-    else self[k] = nil end
+    else self.data[k] = nil end
   end
   _block_for(self,timeout)
 end
@@ -648,7 +648,7 @@ end
 local brpoplpush = function(self,k1,k2,timeout)
   k1,k2 = chkargs(2,k1,k2)
   timeout = toint(timeout)
-  if not self[k1] then _block_for(self,timeout) end
+  if not self.data[k1] then _block_for(self,timeout) end
   return rpoplpush(self,k1,k2)
 end
 
@@ -662,7 +662,7 @@ end
 local linsert = function(self,k,mode,pivot,v)
   mode = mode:lower()
   assert((mode == "before") or (mode == "after"))
-  if not self[k] then return 0 end
+  if not self.data[k] then return 0 end
   local x = xgetw(self,k,"list")
   local p = nil
   for i=x.head+1,x.tail do
@@ -694,7 +694,7 @@ local lpop = function(self,k)
   if l > 1 then
     x.head = x.head + 1
     x[x.head] = nil
-  else self[k] = nil end
+  else self.data[k] = nil end
   return r
 end
 
@@ -709,7 +709,7 @@ local lpush = function(self,k,...)
 end
 
 local lpushx = function(self,k,v)
-  if not self[k] then return 0 end
+  if not self.data[k] then return 0 end
   local x = xgetw(self,k,"list")
   x[x.head] = v
   x.head = x.head - 1
@@ -760,7 +760,7 @@ end
 local lrem = function(self,k,count,v)
   k,v = chkarg(k),chkarg(v)
   assert(type(count) == "number")
-  if not self[k] then return 0 end
+  if not self.data[k] then return 0 end
   local x = xgetw(self,k,"list")
   local n,last = 0,nil
   local op = (count < 0) and _lrem_r or _lrem_l
@@ -782,7 +782,7 @@ end
 local lset = function(self,k,i,v)
   k,v = chkarg(k),chkarg(v)
   assert(type(i) == "number")
-  if not self[k] then
+  if not self.data[k] then
     error("ERR no such key")
   end
   local x = xgetw(self,k,"list")
@@ -817,7 +817,7 @@ local rpop = function(self,k)
   if l > 1 then
     x[x.tail] = nil
     x.tail = x.tail - 1
-  else self[k] = nil end
+  else self.data[k] = nil end
   return r
 end
 
@@ -839,7 +839,7 @@ local rpush = function(self,k,...)
 end
 
 local rpushx = function(self,k,v)
-  if not self[k] then return 0 end
+  if not self.data[k] then return 0 end
   local x = xgetw(self,k,"list")
   x.tail = x.tail + 1
   x[x.tail] = v
@@ -886,7 +886,7 @@ end
 local sdiffstore = function(self,k2,k,...)
   k2 = chkarg(k2)
   local x = _sdiff(self,k,...)
-  self[k2] = {ktype="set",value=x}
+  self.data[k2] = {ktype="set",value=x}
   return nkeys(x)
 end
 
@@ -913,7 +913,7 @@ end
 local sinterstore = function(self,k2,k,...)
   k2 = chkarg(k2)
   local x = _sinter(self,k,...)
-  self[k2] = {ktype="set",value=x}
+  self.data[k2] = {ktype="set",value=x}
   return nkeys(x)
 end
 
@@ -1007,7 +1007,7 @@ end
 local sunionstore = function(self,k2,k,...)
   k2 = chkarg(k2)
   local x = _sunion(self,k,...)
-  self[k2] = {ktype="set",value=x}
+  self.data[k2] = {ktype="set",value=x}
   return nkeys(x)
 end
 
@@ -1344,7 +1344,7 @@ local zinterstore = function(self,...)
     for j=1,#to_update do _z_update(x,to_update[j]) end
   end
   local r = #x.list
-  if r > 0 then self[params.dest] = {ktype="zset",value=x} end
+  if r > 0 then self.data[params.dest] = {ktype="zset",value=x} end
   return r
 end
 
@@ -1491,7 +1491,7 @@ local zunionstore = function(self,...)
     end
   end
   local r = #x.list
-  if r > 0 then self[params.dest] = {ktype="zset",value=x} end
+  if r > 0 then self.data[params.dest] = {ktype="zset",value=x} end
   return r
 end
 
@@ -1508,7 +1508,7 @@ end
 -- server
 
 local flushdb = function(self)
-  for k,_ in pairs(self) do self[k] = nil end
+  self.data = {}
   return true
 end
 
@@ -1619,7 +1619,7 @@ local methods = {
 }
 
 local new = function()
-  local r = {}
+  local r = {data = {}}
   return setmetatable(r,{__index = methods})
 end
 
