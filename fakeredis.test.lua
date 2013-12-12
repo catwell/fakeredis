@@ -1,3 +1,4 @@
+-- WARNING: setting this to true will erase your local Redis DB.
 local TEST_REDIS_LUA = false
 
 local fakeredis = require "fakeredis"
