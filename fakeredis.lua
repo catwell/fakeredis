@@ -76,11 +76,27 @@ local cleanup = function(self,k)
   if empty(self,k) then self.data[k] = nil end
 end
 
+local is_integer = function(x)
+  return (type(x) == "number") and (math.floor(x) == x)
+end
+
+local overflows = function(n)
+  return (n > 2^53) or (n < -2^53)
+end
+
+local is_bounded_integer = function(x)
+  return (is_integer(x) and (not overflows(x)))
+end
+
 local toint = function(x)
   if type(x) == "string" then x = tonumber(x) end
-  if (type(x) == "number") and (math.floor(x) == x) then
-    return x
-  else return nil end
+  return is_bounded_integer(x) and x or nil
+end
+
+local tostr = function(x)
+  if is_bounded_integer(x) then
+    return string.format("%d",x)
+  else return tostring(x) end
 end
 
 local char_bitcount = function(x)
@@ -98,7 +114,7 @@ local char_bitcount = function(x)
 end
 
 local chkarg = function(x)
-  if type(x) == "number" then x = tostring(x) end
+  if type(x) == "number" then x = tostr(x) end
   assert(type(x) == "string")
   return x
 end
@@ -355,7 +371,11 @@ incrby = function(self,k,n)
   local i = toint(x[1] or 0)
   assert(i,"ERR value is not an integer or out of range")
   i = i+n
-  x[1] = tostring(i)
+  assert(
+    (not overflows(i)),
+    "ERR increment or decrement would overflow"
+  )
+  x[1] = tostr(i)
   return i
 end
 
@@ -366,7 +386,7 @@ local incrbyfloat = function(self,k,n)
   local i = tonumber(x[1] or 0)
   assert(i,"ERR value is not a valid float")
   i = i+n
-  x[1] = tostring(i)
+  x[1] = tostr(i)
   return i
 end
 
@@ -499,7 +519,11 @@ local hincrby = function(self,k,k2,n)
   local i = toint(x[k2] or 0)
   assert(i,"ERR value is not an integer or out of range")
   i = i+n
-  x[k2] = tostring(i)
+  assert(
+    (not overflows(i)),
+    "ERR increment or decrement would overflow"
+  )
+  x[k2] = tostr(i)
   return i
 end
 
@@ -510,7 +534,7 @@ local hincrbyfloat = function(self,k,k2,n)
   local i = tonumber(x[k2] or 0)
   assert(i,"ERR value is not a valid float")
   i = i+n
-  x[k2] = tostring(i)
+  x[k2] = tostr(i)
   return i
 end
 
