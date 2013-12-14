@@ -81,7 +81,7 @@ local is_integer = function(x)
 end
 
 local overflows = function(n)
-  return (n > 2^53) or (n < -2^53)
+  return (n > 2^53-1) or (n < -2^53+1)
 end
 
 local is_bounded_integer = function(x)
