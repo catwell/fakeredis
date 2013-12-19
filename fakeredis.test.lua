@@ -124,10 +124,16 @@ T:start("strings"); do
   T:eq( R:decrby("foo","-1"), 8 )
   T:eq( R:set("foo","234293482390480948029348230948"), true )
   T:err( function() R:decr("foo") end )
-  T:eq( R:set("foo",-(2^53) + 5), true )
+  if TEST_REDIS_LUA then -- see https://github.com/nrk/redis-lua/issues/30
+    T:eq( R:set("foo",string.format("%d",-(2^53) + 5)), true )
+  else
+    T:eq( R:set("foo",-(2^53) + 5), true )
+  end
   T:eq( R:decr("foo"), -(2^53) + 4 )
   T:eq( R:incrby("foo",-1), -2^53+3 )
-  T:err( function() R:incrby("foo",-10) end )
+  if not TEST_REDIS_LUA then -- real Redis has higher limits
+    T:err( function() R:incrby("foo",-10) end )
+  end
   T:eq( R:set("foo",2), true )
   T:err( function() R:incrby("foo","234293482390480948029348230948") end )
   T:eq( R:set("foo",2), true )
@@ -252,11 +258,15 @@ T:start("hashes"); do
   T:err( function() R:hincrbyfloat("foo","bar","6.two") end )
   T:eq( R:hget("foo","bar"), "-1.55" )
   T:eq( R:hset("foo","bar",string.format("%d",2^53-2)), false )
-  T:err( function() R:hincrby("foo","bar",2) end )
+  if not TEST_REDIS_LUA then -- real Redis has higher limits
+    T:err( function() R:hincrby("foo","bar",2) end )
+  end
   T:eq( R:hincrby("foo","bar",1), 2^53-1 )
   T:eq( R:hincrby("foo","bar",-1), 2^53-2 )
   T:eq( R:hset("foo","bar",string.format("%d",2^53)), false )
-  T:err( function() R:hincrby("foo","bar",-1) end )
+  if not TEST_REDIS_LUA then -- real Redis has higher limits
+    T:err( function() R:hincrby("foo","bar",-1) end )
+  end
   T:eq( R:del("foo"), 1 )
   T:rk_nil( "foo" )
 end; T:done()
