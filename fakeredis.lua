@@ -88,9 +88,25 @@ local is_bounded_integer = function(x)
   return (is_integer(x) and (not overflows(x)))
 end
 
+local is_finite_number = function(x)
+  return (type(x) == "number") and (x > -math.huge) and (x < math.huge)
+end
+
 local toint = function(x)
   if type(x) == "string" then x = tonumber(x) end
   return is_bounded_integer(x) and x or nil
+end
+
+local tofloat = function(x)
+  if type(x) == "number" then return x end
+  if type(x) ~= "string" then return nil end
+  local r = tonumber(x)
+  if r then return r end
+  if x == "inf" or x == "+inf" then
+    return math.huge
+  elseif x == "-inf" then
+    return -math.huge
+  else return nil end
 end
 
 local tostr = function(x)
@@ -380,12 +396,16 @@ incrby = function(self,k,n)
 end
 
 local incrbyfloat = function(self,k,n)
-  k,n = chkarg(k),tonumber(n)
+  k,n = chkarg(k),tofloat(n)
   assert(n,"ERR value is not a valid float")
   local x = xgetw(self,k,"string")
-  local i = tonumber(x[1] or 0)
+  local i = tofloat(x[1] or 0)
   assert(i,"ERR value is not a valid float")
   i = i+n
+  assert(
+    is_finite_number(i),
+    "ERR increment would produce NaN or Infinity"
+  )
   x[1] = tostr(i)
   return i
 end
@@ -528,12 +548,16 @@ local hincrby = function(self,k,k2,n)
 end
 
 local hincrbyfloat = function(self,k,k2,n)
-  k,k2,n = chkarg(k),chkarg(k2),tonumber(n)
+  k,k2,n = chkarg(k),chkarg(k2),tofloat(n)
   assert(n,"ERR value is not a valid float")
   local x = xgetw(self,k,"hash")
-  local i = tonumber(x[k2] or 0)
+  local i = tofloat(x[k2] or 0)
   assert(i,"ERR value is not a valid float")
   i = i+n
+  assert(
+    is_finite_number(i),
+    "ERR increment would produce NaN or Infinity"
+  )
   x[k2] = tostr(i)
   return i
 end
@@ -1073,7 +1097,7 @@ local _z_pairs = function(...)
   local ps = {}
   for i=1,#arg,2 do
     ps[#ps+1] = _z_pair(
-      assert(tonumber(arg[i])),
+      assert(tofloat(arg[i])),
       chkarg(arg[i+1])
     )
   end
@@ -1259,11 +1283,11 @@ local _zrbs_limits = function(x,s1,s2,descending)
   if s1:sub(1,1) == "(" then
     s1,s1_incl = s1:sub(2,-1),false
   end
-  s1 = assert(tonumber(s1))
+  s1 = assert(tofloat(s1))
   if s2:sub(1,1) == "(" then
     s2,s2_incl = s2:sub(2,-1),false
   end
-  s2 = assert(tonumber(s2))
+  s2 = assert(tofloat(s2))
   if descending then
     s1,s2 = s2,s1
     s1_incl,s2_incl = s2_incl,s1_incl
@@ -1326,7 +1350,7 @@ end
 
 local zincrby = function(self,k,n,v)
   k,v = chkargs(2,k,v)
-  n = assert(tonumber(n))
+  n = assert(tofloat(n))
   local x = xgetw(self,k,"zset")
   local p = x.list[x.set[v]]
   local s = p and (p.s + n) or n
