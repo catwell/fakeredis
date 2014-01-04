@@ -1,8 +1,8 @@
 -- WARNING: setting this to true will erase your local Redis DB.
 local TEST_REDIS_LUA = false
 
-local fakeredis = require "fakeredis"
 local cwtest = require "cwtest"
+local fakeredis = require "fakeredis"
 
 local T = cwtest.new()
 
