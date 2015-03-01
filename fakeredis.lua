@@ -1,3 +1,5 @@
+local unpack = table.unpack or unpack
+
 --- Bit operations
 
 local ok,bit = pcall(require,"bit")
@@ -11,6 +13,14 @@ do
   local ok, mod = pcall(require, "socket")
   if ok and type(mod) == "table" then
     default_sleep = mod.sleep
+  else
+    default_sleep = function(n)
+      local t0 = os.clock()
+      while true do
+        local delta = os.clock() - t0
+        if (delta < 0) or (delta > n) then break end
+      end
+    end
   end
 end
 

@@ -1,6 +1,8 @@
 -- WARNING: setting this to true will erase your local Redis DB.
 local TEST_REDIS_LUA = false
 
+local unpack = table.unpack or unpack
+
 local cwtest = require "cwtest"
 local fakeredis = require "fakeredis"
 
