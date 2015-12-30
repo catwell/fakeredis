@@ -10,8 +10,6 @@ fakeredis is a Redis mock for Lua with the same interface as [redis-lua](https:/
 
 Lua 5.1 users will need [Lua BitOp](http://bitop.luajit.org/).
 
-Lua 5.3 is only supported with `LUA_COMPAT_5_2` on for now.
-
 If you do not set a custom sleep function and LuaSocket is not installed,
 a busy wait will be used for `sleep()`.
 

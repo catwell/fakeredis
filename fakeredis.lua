@@ -2,8 +2,21 @@ local unpack = table.unpack or unpack
 
 --- Bit operations
 
-local ok,bit = pcall(require,"bit")
-if not ok then bit = bit32 end
+local ok,bit
+if _VERSION == "Lua 5.3" then
+  bit = (load [[ return {
+    band = function(x, y) return x & y end,
+    bor = function(x, y) return x | y end,
+    bxor = function(x, y) return x ~ y end,
+    bnot = function(x) return ~x end,
+    rshift = function(x, n) return x >> n end,
+    lshift = function(x, n) return x << n end,
+  } ]])()
+else
+  ok,bit = pcall(require,"bit")
+  if not ok then bit = bit32 end
+end
+
 assert(type(bit) == "table", "module for bitops not found")
 
 --- default sleep

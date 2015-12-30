@@ -6,9 +6,9 @@ env:
   global:
     - LUAROCKS=2.2.0
   matrix:
-    # - LUA=lua5.1
+    # Lua 5.1 is separate because it requires Lua BitOp.
     - LUA=lua5.2
-    # - LUA=lua5.3
+    - LUA=lua5.3
     - LUA=luajit
 
 branches:
