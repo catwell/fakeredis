@@ -6,9 +6,9 @@ env:
   global:
     - LUAROCKS=2.2.0
   matrix:
-    - LUA=lua5.1
+    # - LUA=lua5.1
     - LUA=lua5.2
-    - LUA=lua5.3
+    # - LUA=lua5.3
     - LUA=luajit
 
 branches:
@@ -22,6 +22,15 @@ install:
   - luarocks install luasocket
   - luarocks install penlight
   - luarocks install cwtest
+
+matrix:
+  include:
+    - env: LUA=lua5.1
+      install:
+        - luarocks install luasocket
+        - luarocks install penlight
+        - luarocks install cwtest
+        - luarocks install luabitop
 
 script:
   - lua fakeredis.test.lua

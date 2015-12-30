@@ -1,5 +1,7 @@
 # fakeredis
 
+[![Build Status](https://travis-ci.org/catwell/fakeredis.png?branch=master)](https://travis-ci.org/catwell/fakeredis)
+
 ## Presentation
 
 fakeredis is a Redis mock for Lua with the same interface as [redis-lua](https://github.com/nrk/redis-lua).
