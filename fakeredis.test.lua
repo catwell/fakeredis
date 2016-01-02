@@ -4,7 +4,6 @@ local TEST_REDIS_LUA = false
 local unpack = table.unpack or unpack
 
 local cwtest = require "cwtest"
-local fakeredis = require "fakeredis"
 
 local T = cwtest.new()
 
@@ -574,7 +573,7 @@ T:start("sets"); do
   T:eq( #_x, 8 )
   for i=1,#_x do T:eq( _cur[_x[i]], true ) end
   local n
-  for t=1,10 do
+  for _=1,10 do
     _cur = {A = true,B = true,C = true,D = true,E = true,F = true}
     n = math.random(1,5)
     _x = R:srandmember("S0",n)
@@ -786,7 +785,7 @@ T:start("keys"); do
   for i=1,#_ks do _ks_set[_ks[i]] = true end
   local _cur,_prev
   local _founddiff,_notakey = false,false
-  for i=1,100 do
+  for _=1,100 do
     _cur = R:randomkey()
     if not _ks_set[_cur] then _notakey = true end
     if _cur ~= _prev then _founddiff = true end

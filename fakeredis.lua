@@ -2,19 +2,22 @@ local unpack = table.unpack or unpack
 
 --- Bit operations
 
-local ok,bit
-if _VERSION == "Lua 5.3" then
-  bit = (load [[ return {
-    band = function(x, y) return x & y end,
-    bor = function(x, y) return x | y end,
-    bxor = function(x, y) return x ~ y end,
-    bnot = function(x) return ~x end,
-    rshift = function(x, n) return x >> n end,
-    lshift = function(x, n) return x << n end,
-  } ]])()
-else
-  ok,bit = pcall(require,"bit")
-  if not ok then bit = bit32 end
+local bit
+do
+  if _VERSION == "Lua 5.3" then
+    bit = (load [[ return {
+      band = function(x, y) return x & y end,
+      bor = function(x, y) return x | y end,
+      bxor = function(x, y) return x ~ y end,
+      bnot = function(x) return ~x end,
+      rshift = function(x, n) return x >> n end,
+      lshift = function(x, n) return x << n end,
+    } ]])()
+  else
+    local ok
+    ok,bit = pcall(require,"bit")
+    if not ok then bit = bit32 end
+  end
 end
 
 assert(type(bit) == "table", "module for bitops not found")
@@ -80,16 +83,16 @@ local empty = function(self, k)
   elseif t == "string" then
     return not v[1]
   elseif (t == "hash") or (t == "set") then
-    for _,_ in pairs(v) do return false end
+    if next(v) then return false end
     return true
   elseif t == "list" then
     return v.head == v.tail
   elseif t == "zset" then
     if #v.list == 0 then
-      for _,_ in pairs(v.set) do error("incoherent") end
+      if next(v.set) then error("incoherent") end
       return true
     else
-      for _,_ in pairs(v.set) do return(false) end
+      if next(v.set) then return(false) end
       error("incoherent")
     end
   else error("unsupported") end
@@ -500,7 +503,7 @@ local setnx = function(self, k, v)
 end
 
 local setrange = function(self, k, i, s)
-  local k, s = chkargs(2, k, s)
+  k, s = chkargs(2, k, s)
   i = toint(i)
   assert(i and (i >= 0))
   local x = xgetw(self, k, "string")
@@ -508,7 +511,7 @@ local setrange = function(self, k, i, s)
   local ly, ls = #y, #s
   if i > ly then -- zero padding
     local t = {}
-    for i=1, i-ly do t[i] = "\0" end
+    for j=1, i-ly do t[j] = "\0" end
     y = y .. table.concat(t) .. s
   else
     y = y:sub(1, i) .. s .. y:sub(i+ls+1, ly)
@@ -1044,7 +1047,7 @@ local srandmember = function(self, k, count)
       r[#r+1] = table.remove(l, math.random(1, n-i))
     end
   else -- allow repetition
-    for i=1,-count do
+    for _=1,-count do
       r[#r+1] = l[math.random(1, n)]
     end
   end
@@ -1162,7 +1165,7 @@ local _z_remove_range = function(x, i1, i2)
     (i2 <= #l)
   )
   local ix, n = i1, i2-i1+1
-  for i=1,n do
+  for _=1,n do
     x.set[l[ix].v] = nil
     table.remove(l, ix)
   end
@@ -1386,7 +1389,7 @@ local zinterstore = function(self, ...)
   local x = xdefv("zset")
   local aggregate
   if params.aggregate == "sum" then
-    aggregate = function(x, y) return x+y end
+    aggregate = function(a, b) return a+b end
   elseif params.aggregate == "min" then
     aggregate = math.min
   elseif params.aggregate == "max" then
@@ -1545,7 +1548,7 @@ local zunionstore = function(self, ...)
   local default_score, aggregate
   if params.aggregate == "sum" then
     default_score = 0
-    aggregate = function(x, y) return x+y end
+    aggregate = function(a, b) return a+b end
   elseif params.aggregate == "min" then
     default_score = math.huge
     aggregate = math.min
