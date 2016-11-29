@@ -592,6 +592,11 @@ end; T:done()
 
 --- zsets
 
+local function _scores_n(t)
+    for _, v in ipairs(t) do v[2] = tonumber(v[2]) end
+    return t
+end
+
 T:start("zsets"); do
     T:rk_nil("foo")
     T:eq( R:zadd("foo",10,"A"), 1 )
@@ -599,7 +604,7 @@ T:start("zsets"); do
     T:eq( R:zcard("foo"), 3 )
     T:eq( R:zrange("foo",0,-1), {"A","B","C"} )
     T:eq(
-        R:zrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrange("foo",0,-1,{withscores=true})),
         {{"A",10},{"B",20},{"C",30}}
     )
     T:eq( R:zadd("foo",30,"A",30.5,"D"), 1 )
@@ -607,27 +612,27 @@ T:start("zsets"); do
         T:yes( R:dbg_zcoherence("foo") )
     end
     T:eq(
-        R:zrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrange("foo",0,-1,{withscores=true})),
         {{"B",20},{"A",30},{"C",30},{"D",30.5}}
     )
     T:eq(
-        R:zrange("foo",1,2,{withscores=true}),
+        _scores_n(R:zrange("foo",1,2,{withscores=true})),
         {{"A",30},{"C",30}}
     )
     T:eq( R:zrange("foo",0,2), {"B","A","C"} )
     T:eq( R:zrange("foo",1,3), {"A","C","D"} )
     T:eq(
-        R:zrevrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrevrange("foo",0,-1,{withscores=true})),
         {{"D",30.5},{"C",30},{"A",30},{"B",20}}
     )
     T:eq(
-        R:zrevrange("foo",1,2,{withscores=true}),
+        _scores_n(R:zrevrange("foo",1,2,{withscores=true})),
         {{"C",30},{"A",30}}
     )
     T:eq( R:zrevrange("foo",0,2), {"D","C","A"} )
     T:eq( R:zrevrange("foo",1,3), {"C","A","B"} )
     T:eq( R:zcard("foo"), 4 )
-    T:eq( R:zscore("foo","D"), 30.5 )
+    T:eq( tonumber(R:zscore("foo","D")), 30.5 )
     T:eq( R:zscore("foo","nothing"), nil )
     T:eq( R:zscore("nothing","D"), nil )
     T:rk_nil("nothing")
@@ -635,28 +640,31 @@ T:start("zsets"); do
     T:eq( R:zincrby("foo",-0.5,"D"), 30 )
     T:eq( R:zincrby("foo",-0.5,"E"), -0.5 )
     T:eq(
-        R:zrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrange("foo",0,-1,{withscores=true})),
         {{"E",-0.5},{"B",20},{"C",30},{"D",30},{"A",32.3}}
     )
     T:eq( R:zrangebyscore("foo",20,30), {"B","C","D"} )
     T:eq( R:zrangebyscore("foo","(20",30), {"C","D"} )
     T:eq( R:zrangebyscore("foo","(20","+inf"), {"C","D","A"} )
     T:eq( R:zrangebyscore("foo","-inf",30), {"E","B","C","D"} )
-    T:eq( R:zrangebyscore("foo",20,"(30","withscores"), {{"B",20}} )
+    T:eq( _scores_n(R:zrangebyscore("foo",20,"(30","withscores")), {{"B",20}} )
     T:eq( R:zrangebyscore("foo",-5,40), {"E","B","C","D","A"} )
     T:eq( R:zrangebyscore("foo",-5,40,"limit",1,3), {"B","C","D"} )
     T:eq(
-        R:zrangebyscore("foo",-5,40,{limit={4,9},withscores=true}),
+        _scores_n(R:zrangebyscore("foo",-5,40,{limit={4,9},withscores=true})),
         {{"A",32.3}}
     )
     T:eq( R:zrevrangebyscore("foo",30,"(20"), {"D","C"} )
     T:eq( R:zrevrangebyscore("foo",30,"(20"), {"D","C"} )
-    T:eq( R:zrevrangebyscore("foo","(30",20,"withscores"), {{"B",20}} )
+    T:eq( _scores_n(R:zrevrangebyscore(
+        "foo","(30",20,"withscores"
+    )), {{"B",20}} )
     T:eq( R:zrevrangebyscore("foo",40,-5), {"A","D","C","B","E"} )
     T:eq( R:zrevrangebyscore("foo",40,-5,"limit",1,3), {"D","C","B"} )
     T:eq(
-        R:zrevrangebyscore("foo",40,-5,{limit={4,9},withscores=true}),
-        {{"E",-0.5}}
+        _scores_n(R:zrevrangebyscore(
+            "foo",40,-5,{limit={4,9},withscores=true}
+        )), {{"E",-0.5}}
     )
     T:eq( R:zcount("foo",-10,-5), 0 )
     T:eq( R:zcount("foo","(-10",50), 5 )
@@ -673,12 +681,12 @@ T:start("zsets"); do
     T:eq( R:zrevrank("foo","nothing"), nil )
     T:eq( R:zrem("foo","D","B","X"), 2 )
     T:eq(
-        R:zrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrange("foo",0,-1,{withscores=true})),
         {{"E",-0.5},{"C",30},{"A",32.3}}
     )
     T:eq( R:zrem("foo","A","E"), 2 )
     T:eq(
-        R:zrange("foo",0,-1,{withscores=true}),
+        _scores_n(R:zrange("foo",0,-1,{withscores=true})),
         {{"C",30}}
     )
     T:eq( R:zrem("foo","A","C"), 1 )
@@ -705,23 +713,23 @@ T:start("zsets"); do
     T:eq( R:zadd("z2",3,"A",7,"X",11,"C"), 3 )
     T:eq( R:zunionstore("z3",2,"z1","z2"), 4 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"X",7},{"A",13},{"B",20},{"C",41}}
     )
     T:eq( R:zunionstore("z3",3,"z1","z2","zxxx","weights",1,-3,2), 4 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"X",-21},{"C",-3},{"A",1},{"B",20}}
     )
     T:eq( R:zadd("z3",30,"C"), 0 )
     T:eq( R:zunionstore("z3",3,"z1","z2","z3","aggregate","min"), 4 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"X",-21},{"A",1},{"C",11},{"B",20}}
     )
     T:eq( R:zunionstore("z3",2,"z1","z2","aggregate","max","weights",1,3), 4 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"A",10},{"B",20},{"X",21},{"C",33}}
     )
     T:eq( R:del("z1","z2","z3"), 3 )
@@ -729,12 +737,12 @@ T:start("zsets"); do
     T:eq( R:zadd("z2",3,"A",7,"X",11,"C"), 3 )
     T:eq( R:zinterstore("z3",2,"z1","z2"), 2 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"A",13},{"C",41}}
     )
     T:eq( R:zinterstore("z3",2,"z3","z2",{aggregate="max",weights={1,4}}), 2 )
     T:eq(
-        R:zrange("z3",0,-1,"withscores"),
+        _scores_n(R:zrange("z3",0,-1,"withscores")),
         {{"A",13},{"C",44}}
     )
     T:eq( R:del("z1","z2","z3"), 3 )
