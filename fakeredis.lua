@@ -1092,29 +1092,20 @@ end
 
 -- zsets
 
-local _z_p_mt = {
-    __eq = function(a, b)
-        if a.v == b.v then
-            assert(a.s == b.s)
-            return true
-        else return false end
-    end,
-    __lt = function(a, b)
-        if a.s == b.s then
-            return (a.v < b.v)
-        else
-            return (a.s < b.s)
-        end
-    end,
-}
+local _z_pair_lt = function(a, b)
+    if a.s == b.s then
+        return (a.v < b.v)
+    else
+        return (a.s < b.s)
+    end
+end
 
 local _z_pair = function(s, v)
     assert(
         (type(s) == "number") and
         (type(v) == "string")
     )
-    local r = {s = s, v = v}
-    return setmetatable(r, _z_p_mt)
+    return {s = s, v = v}
 end
 
 local _z_pairs = function(...)
@@ -1137,7 +1128,6 @@ local _z_insert = function(x, ix, p)
         (type(p) == "table")
     )
     local l = x.list
-    setmetatable(p, nil)
     table.insert(l, ix, p)
     for i=ix+1,#l do
         x.set[l[i].v] = x.set[l[i].v] + 1
@@ -1181,7 +1171,7 @@ local _z_update = function(x, p)
     local found = _z_remove(x, p.v)
     local ix = nil
     for i=1,#l do
-        if l[i] > p then
+        if _z_pair_lt(p, l[i]) then
             ix = i; break
         end
     end
