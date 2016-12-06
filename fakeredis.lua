@@ -1137,6 +1137,7 @@ local _z_insert = function(x, ix, p)
         (type(p) == "table")
     )
     local l = x.list
+    setmetatable(p, nil)
     table.insert(l, ix, p)
     for i=ix+1,#l do
         x.set[l[i].v] = x.set[l[i].v] + 1
