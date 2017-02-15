@@ -214,7 +214,7 @@ local del = function(self, ...)
 end
 
 local exists = function(self, k)
-    return not not self.data[k]
+  return self.data[k] == nil and 0 or 1 
 end
 
 local keys = function(self, pattern)
