@@ -802,3 +802,5 @@ T:start("keys"); do
     T:eq( _notakey, false )
     T:eq( _founddiff, true )
 end; T:done()
+
+T:exit()
