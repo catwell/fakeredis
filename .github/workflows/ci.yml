@@ -29,7 +29,7 @@ jobs:
       - name: install LuaBitOp
         run: |
           ./.lua/bin/luarocks install LuaBitOp
-        if: ${{ matrix.lua-version == "5.1.5" }}
+        if: ${{ matrix.lua-version == '5.1.5' }}
 
       - name: run tests
         run: |
