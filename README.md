@@ -33,4 +33,4 @@ fakeredis does not support multiple DBs. You should probably not use them anyway
 
 ## Copyright
 
-Copyright (c) 2012-2016 Pierre Chapuis
+Copyright (c) 2012-2022 Pierre Chapuis

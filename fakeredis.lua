@@ -4,7 +4,7 @@ local unpack = table.unpack or unpack
 
 local bit
 do
-    if _VERSION == "Lua 5.3" then
+    if _VERSION == "Lua 5.3" or _VERSION == "Lua 5.4" then
         bit = (load [[ return {
             band = function(x, y) return x & y end,
             bor = function(x, y) return x | y end,
