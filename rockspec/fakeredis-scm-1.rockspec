@@ -1,3 +1,5 @@
+rockspec_format = "3.0"
+
 package = "fakeredis"
 version = "scm-1"
 
@@ -25,4 +27,14 @@ build = {
     type = "none",
     install = { lua = { fakeredis = "fakeredis.lua" } },
     copy_directories = {},
+}
+
+test_dependencies = {
+    "cwtest",
+    "luasocket",
+}
+
+test = {
+   type = "command",
+   script = "fakeredis.test.lua",
 }

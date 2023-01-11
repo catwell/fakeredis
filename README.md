@@ -1,6 +1,6 @@
 # fakeredis
 
-[![Build Status](https://travis-ci.org/catwell/fakeredis.png?branch=master)](https://travis-ci.org/catwell/fakeredis)
+![CI Status](https://github.com/catwell/fakeredis/actions/workflows/ci.yml/badge.svg?branch=master)
 
 ## Presentation
 
