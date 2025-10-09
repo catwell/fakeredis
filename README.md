@@ -2,6 +2,12 @@
 
 ![CI Status](https://github.com/catwell/fakeredis/actions/workflows/ci.yml/badge.svg?branch=master)
 
+## Important note
+
+This module is no longer maintained and not up-to-date with recent Redis versions.
+
+If you want to update it and maintain it, get in touch with me.
+
 ## Presentation
 
 fakeredis is a Redis mock for Lua with the same interface as [redis-lua](https://github.com/nrk/redis-lua).
